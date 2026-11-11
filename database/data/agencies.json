@@ -1,0 +1,1152 @@
+[
+    {
+        "name": "Biliran Province State University (BiPSU)",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Biliran",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Almeria, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Biliran, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Cabucgayan, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Caibiran, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Culaba, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Kawayan, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Maripipi, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Municipal Government of Naval, Biliran",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Naval Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Provincial Government of Biliran",
+        "sector": "LGU-Province",
+        "field_office": "CSC Field Office - Biliran"
+    },
+    {
+        "name": "Borongan Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "City Government of Borongan",
+        "sector": "LGU-City",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Borongan City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Eastern Samar",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Eastern Samar State University",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Arteche, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Balangiga, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Balangkayan, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Can-Avid, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Dolores, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Gen. Macarthur, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Giporlos, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Guiuan, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Hernani, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Jipapad, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Lawaan, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Llorente, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Maslog, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Maydolong, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Mercedes, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Oras, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Quinapondan, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Salcedo, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of San Julian, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of San Policarpo, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Sulat, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Municipal Government of Taft, Eastern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Provincial Government of Eastern Samar",
+        "sector": "LGU-Province",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Sulat Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Taft Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Eastern Samar"
+    },
+    {
+        "name": "Babatngon Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Bureau of Fire Protection Region VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Bureau of Fisheries and Aquatic Resources Regional Office VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "City Government of Tacloban",
+        "sector": "LGU-City",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Commission on Elections Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Commission on Higher Education Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "DOJ-National Prosecution Service Region VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of Agrarian Reform Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of Agriculture Regional Field Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of Budget and Management Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Tacloban City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of Environment and Natural Resources Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of Labor and Employment Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Department of the Interior and Local Government Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Eastern Visayas Medical Center",
+        "sector": "NGA-Local Hospital",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Eastern Visayas State University",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Environmental Management Bureau Region VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Jaro Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Leyte Metropolitan Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Leyte Normal University",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Metro Carigara Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Alangalang, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Babatngon, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Barugo, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Basey, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Capoocan, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Carigara, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Jaro, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Leyte, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Marabut, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Pastrana, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of San Miguel, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Sta. Fe, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Municipal Government of Tunga, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "National Irrigation Administration Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "National Police Commission Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Parole and Probation Administration Region VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Philippine National Police - Police Regional Office 8",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Technical Education And Skills Development Authority Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "University of the Philippines Tacloban College",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Leyte I"
+    },
+    {
+        "name": "Abuyog Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Bureau of Jail Management and Penology Regional Office VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Leyte",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Public Works And Highways - Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Education Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Health - Eastern Visayas Center for Health Development",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Health - Treatment and Rehabilitation Center - Dulag",
+        "sector": "NGA-Local Hospital",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Science and Technology Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Social Welfare and Development - Field Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Department of Trade and Industry Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Governor Benjamin T. Romualdez General Hospital and Schistosomiasis Center",
+        "sector": "NGA-Local Hospital",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Land Transportation Franchising and Regulatory Board Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Land Transportation Office Regional Office 8",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Maritime Industry Authority Regional Office VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Mines and Geosciences Bureau Regional Office VIII",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Abuyog, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Burauen, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Dagami, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Dulag, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Javier, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Julita, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of La Paz, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Macarthur, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Mahaplag, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Mayorga, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Palo, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Tabontabon, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Tanauan, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Municipal Government of Tolosa, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "National Economic Development Authority Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "National Food Authority Region VIII",
+        "sector": "NGA-Regional Office",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Philippine Science High School - Eastern Visayas Campus",
+        "sector": "NGA-Attached Agency",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Provincial Government of Leyte",
+        "sector": "LGU-Province",
+        "field_office": "CSC Field Office - Leyte II"
+    },
+    {
+        "name": "Catarman Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Northern Samar",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Allen, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Biri, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Bobon, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Capul, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Catarman, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Catubig, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Gamay, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Laoang, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Lapinig, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Las Navas, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Lavezares, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Lope de Vega, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Mapanas, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Mondragon, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Palapag, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Pambujan, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Rosario, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of San Antonio, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of San Isidro, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of San Jose, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of San Roque, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of San Vicente, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Silvino Lubos, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Municipal Government of Victoria, Northern Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Provincial Government of Northern Samar",
+        "sector": "LGU-Province",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "San Isidro Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "San Jose Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "University Of Eastern Philippines",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Victoria Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Northern Samar"
+    },
+    {
+        "name": "Basey Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Calbayog City Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Calbiga Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Catbalogan Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "City Government of Calbayog",
+        "sector": "LGU-City",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "City Government of Catbalogan",
+        "sector": "LGU-City",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Calbayog City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Catbalogan City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Samar",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Almagro, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Calbiga, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Daram, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Gandara, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Hinabangan, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Jiabong, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Matuguinao, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Motiong, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Pagsanghan, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Paranas, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Pinabacdao, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of San Jorge, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of San Jose De Buan, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of San Sebastian, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Sta. Margarita, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Sta. Rita, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Sto. Niño, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Tagapul-an, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Talalora, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Tarangnan, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Villareal, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Municipal Government of Zumarraga, Samar",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Northwest Samar State University",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Provincial Government of Samar",
+        "sector": "LGU-Province",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "Samar State University",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Samar"
+    },
+    {
+        "name": "City Government of Maasin",
+        "sector": "LGU-City",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Maasin City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Southern Leyte",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Maasin Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Metro Hilongos Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Anahawan, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Bato, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Bontoc, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Hilongos, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Hindang, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Hinunangan, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Hinundayan, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Inopacan, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Libagon, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Liloan, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Limasawa, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Macrohon, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Malitbog, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Matalom, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Padre Burgos, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Pintuyan, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of San Francisco, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of San Juan, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of San Ricardo, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Silago, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Sogod, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of St. Bernard, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Municipal Government of Tomas Oppus, Southern Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Provincial Government of Southern Leyte",
+        "sector": "LGU-Province",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Sogod Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Southern Leyte State University",
+        "sector": "SUC",
+        "field_office": "CSC Field Office - Southern Leyte"
+    },
+    {
+        "name": "Baybay City Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "City Government of Baybay",
+        "sector": "LGU-City",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "City Government of Ormoc",
+        "sector": "LGU-City",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Baybay City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Department of Education - Schools Division Office of Ormoc City",
+        "sector": "NGA-Schools Division Office",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Isabel Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Merida Water District",
+        "sector": "GOCC-Water District",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Albuera, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Calubian, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Isabel, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Kananga, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Matag-ob, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Merida, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Palompon, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of San Isidro, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Tabango, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Municipal Government of Villaba, Leyte",
+        "sector": "LGU-Municipality",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Palompon Institute of Technology",
+        "sector": "SUC",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    },
+    {
+        "name": "Visayas State University",
+        "sector": "SUC",
+        "field_office": "CSC Satellite Office - Western Leyte"
+    }
+]

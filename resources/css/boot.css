@@ -1,0 +1,512 @@
+/**
+ * The boot screens: the navy page-load preloader and the light "Opening
+ * <system>" / sign-in card. Imported by app.css (the Vue splash and the
+ * launch page use these classes) and inlined into the page <head> by
+ * app.blade.php, so the screen paints on first paint, before app.css has
+ * arrived and with or without the Vite dev server.
+ *
+ * Because it can run before the theme exists, every token carries its
+ * value as a fallback; a test keeps those in step with @theme.
+ */
+/**
+ * The IMIS page-load preloader (after old-imis assets/css/preloader.css),
+ * used by the boot preloader in app.blade.php: dotted navy field, the logo
+ * on a white disc inside one breathing red halo, the agency name over the
+ * product name, a red divider, "Loading" with bouncing dots, and an
+ * indeterminate red sweep along the bottom edge (the wait has no known
+ * length, so the bar promises none).
+ */
+@layer components {
+    .imis-preloader {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        padding: 0 1.5rem;
+        text-align: center;
+        color: #fff;
+        font-family: var(--font-sans, 'Poppins', ui-sans-serif, system-ui, sans-serif);
+        background-color: var(--color-csc-blue, #2a338f);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='1' cy='1' r='1' fill='%23ffffff' fill-opacity='0.045'/%3E%3C/svg%3E");
+        background-size: 24px 24px;
+        user-select: none;
+    }
+
+    .imis-preloader__logo-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: clamp(6.75rem, 30vw, 7.5rem);
+        aspect-ratio: 1;
+        margin-bottom: 2rem;
+    }
+
+    /* White disc behind the logo. */
+    .imis-preloader__logo-wrap::before {
+        content: '';
+        position: absolute;
+        inset: 20%;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 6px 22px rgb(0 0 0 / 0.3);
+    }
+
+    /* The one moving signal: a red ring breathing outward (transform and
+       opacity only, so it stays on the compositor). */
+    .imis-preloader__logo-wrap::after {
+        content: '';
+        position: absolute;
+        inset: 14%;
+        border-radius: 50%;
+        border: 3px solid color-mix(in srgb, var(--color-csc-red, #ec1c2d) 70%, transparent);
+        animation: imis-preloader-halo 2.4s ease-in-out infinite;
+    }
+
+    .imis-preloader__logo {
+        position: relative;
+        z-index: 1;
+        width: 53%;
+        aspect-ratio: 1;
+        object-fit: contain;
+    }
+
+    .imis-preloader__agency-main,
+    .imis-preloader__agency-sub {
+        display: block;
+        text-transform: uppercase;
+    }
+
+    .imis-preloader__agency-main {
+        margin-bottom: 0.25rem;
+        font-size: clamp(0.8125rem, 3.4vw, 0.9375rem);
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        color: rgb(255 255 255 / 0.95);
+    }
+
+    .imis-preloader__agency-sub {
+        font-size: 0.6875rem;
+        letter-spacing: 0.12em;
+        color: rgb(255 255 255 / 0.75);
+    }
+
+    .imis-preloader__product {
+        display: block;
+        max-width: 22rem;
+        margin-top: 0.625rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        line-height: 1.4;
+        letter-spacing: 0.02em;
+        color: rgb(255 255 255 / 0.75);
+    }
+
+    .imis-preloader__divider {
+        width: 2.5rem;
+        height: 2px;
+        margin: 1.125rem auto;
+        border-radius: 1px;
+        background: var(--color-csc-red, #ec1c2d);
+    }
+
+    .imis-preloader__label {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: rgb(255 255 255 / 0.75);
+    }
+
+    .imis-preloader__dots {
+        position: relative;
+        top: 1px;
+        display: inline-flex;
+        align-items: flex-end;
+        gap: 3px;
+        margin-left: 3px;
+    }
+
+    .imis-preloader__dots span {
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 0.85);
+        animation: imis-preloader-dot 1.5s ease-in-out infinite both;
+    }
+
+    .imis-preloader__dots span:nth-child(2) {
+        animation-delay: 0.22s;
+    }
+
+    .imis-preloader__dots span:nth-child(3) {
+        animation-delay: 0.44s;
+    }
+
+    .imis-preloader__bar-wrap {
+        position: absolute;
+        inset: auto 0 0;
+        height: 4px;
+        overflow: hidden;
+        background: rgb(255 255 255 / 0.1);
+    }
+
+    .imis-preloader__bar {
+        width: 35%;
+        height: 100%;
+        border-radius: 2px;
+        background: var(--color-csc-red, #ec1c2d);
+        animation: imis-preloader-sweep 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .imis-preloader__logo-wrap::after,
+        .imis-preloader__dots span,
+        .imis-preloader__bar {
+            animation: none;
+        }
+
+        .imis-preloader__bar {
+            width: 100%;
+            opacity: 0.6;
+        }
+    }
+
+    /* Windows high-contrast: system colours, and the disc and bar keep an edge. */
+    @media (forced-colors: active) {
+        .imis-preloader {
+            background: Canvas;
+            color: CanvasText;
+        }
+
+        .imis-preloader__logo-wrap::before,
+        .imis-preloader__logo-wrap::after {
+            border: 2px solid CanvasText;
+        }
+
+        .imis-preloader__agency-main,
+        .imis-preloader__agency-sub,
+        .imis-preloader__product,
+        .imis-preloader__label {
+            color: CanvasText;
+        }
+
+        .imis-preloader__bar,
+        .imis-preloader__divider,
+        .imis-preloader__dots span {
+            background: Highlight;
+        }
+    }
+}
+
+@keyframes imis-preloader-halo {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.85;
+    }
+    50% {
+        transform: scale(1.22);
+        opacity: 0.15;
+    }
+}
+
+@keyframes imis-preloader-dot {
+    0%,
+    80%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.3;
+    }
+    40% {
+        transform: translateY(-4px);
+        opacity: 1;
+    }
+}
+
+@keyframes imis-preloader-sweep {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(300%);
+    }
+}
+
+/**
+ * The legacy login/logout transition (old-imis js/imis_transition.js) —
+ * deliberately a different, light look from the navy preloader above,
+ * kept flat (the legacy frosted glass, gradient and floating blobs are
+ * dropped): a plain white card on the muted page background, two
+ * counter-rotating rings around the CSC seal, and cycling dots.
+ * Used by TransitionSplash.vue; the enter/leave classes are the Vue
+ * <Transition name="imis-tr"> (fade + card lift) and "imis-tr-instant"
+ * (no fade, so a page just rendered underneath never shows through).
+ */
+@layer components {
+    .imis-tr {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        background: var(--color-surface-muted, #f5f6fa);
+        font-family: var(--font-sans, 'Poppins', ui-sans-serif, system-ui, sans-serif);
+    }
+
+    .imis-tr__card {
+        position: relative;
+        width: 100%;
+        max-width: 24rem;
+        margin: 0 1rem;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        background: var(--color-surface, #ffffff);
+        border: 1px solid var(--color-border, #dfe1ea);
+        border-radius: var(--radius-lg, 0.5rem);
+    }
+
+    .imis-tr__rings {
+        position: relative;
+        width: 7rem;
+        height: 7rem;
+        margin: 0 auto 1.5rem;
+    }
+
+    .imis-tr__rings svg {
+        position: absolute;
+    }
+
+    .imis-tr__ring-outer {
+        inset: 0;
+        width: 7rem;
+        height: 7rem;
+        animation: imis-tr-spin 1.4s linear infinite;
+    }
+
+    .imis-tr__ring-inner {
+        inset: 0.5rem;
+        width: 6rem;
+        height: 6rem;
+        animation: imis-tr-spin 2s linear infinite reverse;
+    }
+
+    .imis-tr__track {
+        stroke: var(--color-border, #dfe1ea);
+    }
+
+    .imis-tr__arc--navy {
+        stroke: var(--color-csc-blue, #2a338f);
+    }
+
+    .imis-tr__arc--red {
+        stroke: var(--color-csc-red, #ec1c2d);
+    }
+
+    .imis-tr__logo {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 3rem;
+        height: 3rem;
+        padding: 0.375rem;
+        object-fit: contain;
+        border-radius: 50%;
+        background: #fff;
+        transform: translate(-50%, -50%);
+    }
+
+    .imis-tr__msg {
+        font-size: 1.0625rem;
+        font-weight: 600;
+        line-height: 1.35;
+        letter-spacing: 0.01em;
+        color: var(--color-text, #1c1e2a);
+    }
+
+    /* The small lead-in above a name, e.g. "Opening" over the system's name. */
+    .imis-tr__lead {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 400;
+        letter-spacing: 0.02em;
+        color: var(--color-text-muted, #5a5d70);
+    }
+
+    .imis-tr__sub {
+        margin-top: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--color-text, #1c1e2a);
+    }
+
+    .imis-tr__name {
+        font-weight: 700;
+        color: var(--color-csc-blue, #2a338f);
+    }
+
+    .imis-tr__note {
+        margin-top: 0.25rem;
+        font-size: 0.75rem;
+        color: var(--color-text-muted, #5a5d70);
+    }
+
+    .imis-tr__dots {
+        display: flex;
+        justify-content: center;
+        gap: 0.375rem;
+        margin-top: 1.5rem;
+    }
+
+    .imis-tr__dots span {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: var(--color-csc-blue, #2a338f);
+        transition:
+            transform 0.3s ease,
+            background-color 0.3s ease;
+    }
+
+    .imis-tr__dots span.is-active {
+        background: var(--color-csc-red, #ec1c2d);
+        transform: scale(1.35);
+    }
+
+    /* Enter/leave: the overlay fades (0.3s) and the card lifts in. */
+    .imis-tr-enter-active,
+    .imis-tr-leave-active {
+        transition: opacity 0.3s ease;
+    }
+
+    .imis-tr-enter-from,
+    .imis-tr-leave-to {
+        opacity: 0;
+    }
+
+    .imis-tr-enter-active .imis-tr__card,
+    .imis-tr-instant-enter-active .imis-tr__card {
+        transition:
+            transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) 0.04s,
+            opacity 0.4s ease 0.04s;
+    }
+
+    .imis-tr-enter-from .imis-tr__card,
+    .imis-tr-instant-enter-from .imis-tr__card {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+
+    .imis-tr-instant-leave-active {
+        transition: opacity 0.3s ease;
+    }
+
+    .imis-tr-instant-leave-to {
+        opacity: 0;
+    }
+
+    @media (max-width: 400px) {
+        .imis-tr__card {
+            padding: 2rem 1.25rem;
+        }
+
+        .imis-tr__rings,
+        .imis-tr__ring-outer {
+            width: 6rem;
+            height: 6rem;
+        }
+
+        .imis-tr__ring-inner {
+            width: 5rem;
+            height: 5rem;
+        }
+    }
+
+    /* Keep the layout, drop the motion. */
+    @media (prefers-reduced-motion: reduce) {
+        .imis-tr__ring-outer,
+        .imis-tr__ring-inner {
+            animation: none;
+        }
+
+        .imis-tr-enter-active .imis-tr__card,
+        .imis-tr-instant-enter-active .imis-tr__card,
+        .imis-tr__dots span {
+            transition: none;
+        }
+
+        .imis-tr-enter-from .imis-tr__card,
+        .imis-tr-instant-enter-from .imis-tr__card {
+            opacity: 1;
+            transform: none;
+        }
+    }
+}
+
+@keyframes imis-tr-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/**
+ * First-paint behaviour of the boot preloader (app.js dismisses it).
+ *
+ * - It fades in only after a short delay (keep in step with SHOW_DELAY in
+ *   app.js), so a page that is ready at once never flashes a loading screen.
+ *   `backwards` fill: hidden during the delay, then back to normal styles so
+ *   the fade-out below can take over.
+ * - The page behind it is the same muted surface as the "Opening" card, so
+ *   the gap before it shows, and the hand-off from IMIS, don't flash white.
+ * - Fade-out is 0.4s, as the card's own.
+ */
+html {
+    background-color: var(--color-surface-muted, #f5f6fa);
+}
+
+@layer components {
+    #boot-preloader {
+        transition:
+            opacity 0.4s ease,
+            visibility 0.4s ease;
+    }
+
+    #boot-preloader.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    #boot-preloader.imis-preloader .imis-preloader__logo-wrap {
+        transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #boot-preloader.imis-preloader.is-hidden .imis-preloader__logo-wrap {
+        transform: scale(0.92);
+    }
+
+    .imis-preloader {
+        animation: imis-boot-in 0.2s ease 0.12s backwards;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .imis-preloader {
+            animation: none;
+        }
+    }
+}
+
+@keyframes imis-boot-in {
+    from {
+        opacity: 0;
+    }
+}
