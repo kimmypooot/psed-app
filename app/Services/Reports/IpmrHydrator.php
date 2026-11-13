@@ -30,7 +30,7 @@ class IpmrHydrator implements ReportHydrator
     {
         $sheet = $spreadsheet->getSheetByName('IPMR 2026') ?? $spreadsheet->getSheet(0);
 
-        $months = $context->isConsolidated() ? range(1, $context->month) : [$context->month];
+        $months = $context->monthsToFill();
 
         // Every figure of every month in one pass over the appointments (see MonthlyFigures).
         $figures = MonthlyFigures::compute($context, $months);
@@ -39,7 +39,7 @@ class IpmrHydrator implements ReportHydrator
             $this->fillMonth($sheet, $month, $figures[$month]);
         }
 
-        $sheet->setCellValue('A2', 'Accomplishment Report for '.$context->monthName().' '.$context->year);
+        $sheet->setCellValue('A2', 'Accomplishment Report for '.$context->periodLabel());
         $sheet->setCellValue('A3', 'Office: '.strtoupper($context->officeName()));
     }
 

@@ -43,7 +43,7 @@ class MrapHydrator implements ReportHydrator
     {
         $sheet = $spreadsheet->getSheet(0);
 
-        $months = $context->isConsolidated() ? range(1, $context->month) : [$context->month];
+        $months = $context->monthsToFill();
 
         // Every figure of every month in one pass over the appointments (see MonthlyFigures).
         $figures = MonthlyFigures::compute($context, $months);
@@ -95,7 +95,7 @@ class MrapHydrator implements ReportHydrator
     {
         $office = $context->office;
 
-        $sheet->setCellValue('A2', 'for the month of '.strtoupper($context->monthName()).' '.$context->year);
+        $sheet->setCellValue('A2', $context->isRange() ? 'for the period of '.strtoupper($context->periodLabel()) : 'for the month of '.strtoupper($context->monthName()).' '.$context->year);
         $sheet->setCellValue('A3', 'Name of Field Office:  '.strtoupper($context->officeName()).($office?->location ? ', '.$office->location : ''));
 
         // Section G is about the year before the one reported (the template names the year it was made for).

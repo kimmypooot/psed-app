@@ -4,6 +4,7 @@ namespace App\Enums;
 
 use App\Models\FieldOffice;
 use App\Services\Reports\ReportContext;
+use App\Services\Reports\ReportPeriod;
 
 /** The four monthly reports of the Field Office. */
 enum ReportType: string
@@ -36,10 +37,26 @@ enum ReportType: string
     public function description(): string
     {
         return match ($this) {
-            self::Ipmr => 'Fills the month\'s column of the 2026 IPMR: first-time eligibles (5.1/5.2), appointments received (6.2.1) and acted upon (6a.1, 6b.1).',
-            self::Mrap => 'Fills the month\'s column of the Enhanced MRAP: received, ready to act, acted, unacted and disapproved appointments.',
-            self::Moa => 'Lists every appointment received or acted upon in the month, on the Plantilla and CasualCon sheets.',
-            self::Absorption => 'Lists the first-time entrants whose appointments were approved or validated in the month, with the eligibility breakdown.',
+            self::Ipmr => 'Fills the 2026 IPMR, a column for each month of the period: first-time eligibles (5.1/5.2), appointments received (6.2.1) and acted upon (6a.1, 6b.1).',
+            self::Mrap => 'Fills the Enhanced MRAP, a column for each month of the period: received, ready to act, acted, unacted and disapproved appointments.',
+            self::Moa => 'Lists every appointment received or acted upon in the period, on the Plantilla and CasualCon sheets.',
+            self::Absorption => 'Lists the first-time entrants whose appointments were approved or validated in the period, with the eligibility breakdown.',
+        };
+    }
+
+    /** The file name for a year, quarter or range of dates ("RO8 IPMR - Q2 2026.xlsx"); a month keeps the CSC naming above. */
+    public function downloadNameFor(?FieldOffice $office, ReportPeriod $period): string
+    {
+        if ($period->kind === ReportPeriod::MONTH) {
+            return $this->downloadName($office, $period->from->year, $period->from->month);
+        }
+
+        // A file name cannot hold the characters a range of dates uses.
+        $label = trim(preg_replace('/[\\\\\/:*?"<>|,]+/', '', $period->label));
+
+        return match ($this) {
+            self::Absorption => sprintf('AbsorptionRate_%s_%s.xlsx', str_replace(' ', '-', $label), $office ? str_replace(' ', '-', $office->name) : 'Regional-Office-VIII'),
+            default => sprintf('%s %s - %s.xlsx', $office?->imis_code ?? ReportContext::REGION_CODE, strtoupper($this->value), $label),
         };
     }
 

@@ -63,7 +63,7 @@ class MoaHydrator implements ReportHydrator
     {
         $sheet->setCellValue('A1', sprintf($title, $context->year));
         $sheet->setCellValue('C3', $context->officeName());
-        $sheet->setCellValue('C4', strtoupper($context->monthName()).', '.$context->year);
+        $sheet->setCellValue('C4', $context->isRange() ? strtoupper($context->periodLabel()) : strtoupper($context->monthName()).', '.$context->year);
 
         // Wipe the template's sample rows, then make room before writing.
         TemplateRows::clear($sheet, self::FIRST_ROW, $footerRow - 1, 'A', $lastColumn);

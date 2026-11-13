@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
@@ -10,6 +10,8 @@ import Badge from '@/Components/UI/Badge.vue';
 import Alert from '@/Components/Feedback/Alert.vue';
 import FormGroup from '@/Components/Forms/FormGroup.vue';
 import Combobox from '@/Components/Forms/Combobox.vue';
+import PeriodPicker from '@/Components/Forms/PeriodPicker.vue';
+import { defaultPeriod, periodParams, wholeMonthsInOneYear } from '@/Utils/period';
 import { request, errorMessage } from '@/Utils/http';
 
 const props = defineProps({
@@ -24,16 +26,11 @@ const page = usePage();
 const seesAllOffices = computed(() => page.props.auth.user.sees_all_offices);
 
 const type = ref(props.types[0].value);
-const month = ref(String(props.defaults.month));
-const year = ref(String(props.defaults.year));
+// The monthly report of the month just ended, until another period is chosen.
+const period = reactive({ ...defaultPeriod(`${props.defaults.year}-${String(props.defaults.month).padStart(2, '0')}-01`, 'month') });
 const officeId = ref(props.defaults.field_office_id ? String(props.defaults.field_office_id) : '');
 const consolidated = computed(() => seesAllOffices.value && officeId.value === 'all');
 
-const months = Array.from({ length: 12 }, (_, i) => ({
-    value: String(i + 1),
-    label: new Date(2000, i, 1).toLocaleString('en', { month: 'long' }),
-}));
-const yearOptions = computed(() => props.years.map((y) => ({ value: String(y), label: String(y) })));
 // PSED can prepare each office's report, or the consolidated one of every Field Office.
 const officeOptions = computed(() => [
     { value: 'all', label: 'All Field Offices (consolidated)' },
@@ -41,13 +38,16 @@ const officeOptions = computed(() => [
 ]);
 
 const selected = computed(() => props.types.find((t) => t.value === type.value));
-const ready = computed(() => !seesAllOffices.value || officeId.value !== '');
+// The IPMR and MRAP have a column for each month, so a range of dates must be whole months of one year.
+const needsWholeMonths = computed(() => ['ipmr', 'mrap'].includes(type.value) && !wholeMonthsInOneYear(period));
+const ready = computed(() => (!seesAllOffices.value || officeId.value !== '') && !needsWholeMonths.value);
 
 // The file is a plain download, so the browser handles it (no Inertia visit).
 // A missing template comes back as a redirect to this page with the reason.
 const downloading = ref(false);
 const download = () => {
-    const query = new URLSearchParams({ type: type.value, month: month.value, year: year.value });
+    const query = periodParams(period);
+    query.set('type', type.value);
     if (seesAllOffices.value) query.set('field_office_id', officeId.value);
 
     downloading.value = true;
@@ -61,10 +61,9 @@ const checking = ref(false);
 const result = ref(null);
 const checkError = ref(null);
 
-const monthLabel = computed(() => months.find((m) => m.value === month.value)?.label ?? '');
 
 const runCheck = async () => {
-    const query = new URLSearchParams({ month: month.value, year: year.value });
+    const query = periodParams(period);
     if (seesAllOffices.value) query.set('field_office_id', officeId.value);
 
     checking.value = true;
@@ -73,7 +72,7 @@ const runCheck = async () => {
     checking.value = false;
 
     if (response.ok) {
-        result.value = { ...response.data, monthLabel: monthLabel.value, year: year.value };
+        result.value = response.data;
     } else {
         result.value = null;
         checkError.value = errorMessage(response);
@@ -81,7 +80,7 @@ const runCheck = async () => {
 };
 
 // A new choice makes the old findings stale.
-watch([month, year, officeId], () => {
+watch([() => ({ ...period }), officeId], () => {
     result.value = null;
     checkError.value = null;
 });
@@ -118,7 +117,7 @@ watch([month, year, officeId], () => {
                 <p v-if="selected" class="mt-4 rounded-md bg-surface-muted p-3 text-sm text-text-muted">{{ selected.description }}</p>
             </Card>
 
-            <Card title="2. Month and office" icon="calendar">
+            <Card title="2. Period and office" icon="calendar">
                 <div class="space-y-4">
                     <FormGroup v-if="seesAllOffices" id="r-office" label="Field Office" required>
                         <Combobox :allow-custom="false" id="r-office" v-model="officeId" :options="officeOptions" required />
@@ -128,14 +127,10 @@ watch([month, year, officeId], () => {
                     </Alert>
                     <p v-else-if="office" class="text-sm"><span class="text-text-muted">Field Office:</span> <strong>{{ office.name }}</strong></p>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <FormGroup id="r-month" label="Month" required>
-                            <Combobox :allow-custom="false" id="r-month" v-model="month" :options="months" required />
-                        </FormGroup>
-                        <FormGroup id="r-year" label="Year" required>
-                            <Combobox :allow-custom="false" id="r-year" v-model="year" :options="yearOptions" required />
-                        </FormGroup>
-                    </div>
+                    <PeriodPicker v-model="period" :years="years" id-prefix="r" />
+                    <Alert v-if="needsWholeMonths" tone="warning">
+                        The {{ selected?.label }} has a column for each month. Choose whole months in one year (the first day of a month to the last day of a month), or use a month, quarter or year.
+                    </Alert>
 
                     <Button variant="success" class="w-full" :disabled="!ready" :loading="downloading" @click="download">
                         <Icon name="download" size="sm" />
@@ -151,7 +146,7 @@ watch([month, year, officeId], () => {
 
         <Alert v-if="checkError" tone="danger" class="mt-4">{{ checkError }}</Alert>
 
-        <Card v-if="result" class="mt-4" :title="`Data check: ${result.monthLabel} ${result.year}`" icon="checkCircle" :description="`${result.checked} appointment${result.checked === 1 ? '' : 's'} go into this month's reports.`">
+        <Card v-if="result" class="mt-4" :title="`Data check: ${result.period}`" icon="checkCircle" :description="`${result.checked} appointment${result.checked === 1 ? '' : 's'} go into this period's reports.`">
             <Alert v-if="!result.issues.length" tone="success">
                 Nothing to fix. Every appointment has the details the four reports ask for.
             </Alert>

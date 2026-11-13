@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Appointment;
 use App\Models\FieldOffice;
 use App\Services\Reports\ReportContext;
+use App\Services\Reports\ReportPeriod;
 use Illuminate\Support\Collection;
 
 /**
@@ -27,8 +28,24 @@ class ReportReadiness
      */
     public function check(?FieldOffice $office, int $year, int $month, int $limit = 200): array
     {
-        $context = new ReportContext($office, $year, $month);
+        return $this->run(new ReportContext($office, $year, $month), $limit);
+    }
 
+    /**
+     * The same for a month, a quarter, a year or a range of dates.
+     *
+     * @return array{checked: int, with_errors: int, with_warnings: int, shown: int, issues: list<array<string, mixed>>}
+     */
+    public function checkPeriod(?FieldOffice $office, ReportPeriod $period, int $limit = 200): array
+    {
+        return $this->run($period->kind === ReportPeriod::MONTH
+            ? new ReportContext($office, $period->from->year, $period->from->month)
+            : ReportContext::forPeriod($office, $period), $limit);
+    }
+
+    /** @return array{checked: int, with_errors: int, with_warnings: int, shown: int, issues: list<array<string, mixed>>} */
+    private function run(ReportContext $context, int $limit): array
+    {
         // The same appointments the month's MOA lists: received in it, or acted upon in it.
         $appointments = $context->appointments()
             ->where(function ($q) use ($context) {

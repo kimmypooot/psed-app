@@ -24,7 +24,8 @@ class AbsorptionHydrator implements ReportHydrator
     public function hydrate(Spreadsheet $spreadsheet, ReportContext $context): void
     {
         $sheet = $spreadsheet->getSheet(0);
-        $sheet->setTitle($context->monthName());
+        // A sheet's name cannot hold : \ / ? * [ ] and stops at 31 characters, which a range of dates can run past.
+        $sheet->setTitle(mb_substr(trim(preg_replace('/[:\\\\\/?*\[\]]+/', ' ', $context->isRange() ? $context->periodLabel() : $context->monthName())), 0, 31));
 
         $rows = $context->appointments()
             ->firstTimeApprovedBetween($context->start, $context->end)
@@ -33,7 +34,7 @@ class AbsorptionHydrator implements ReportHydrator
             ->get();
 
         // --- Summary block ------------------------------------------------
-        $sheet->setCellValue('C2', strtoupper($context->monthName()).' '.$context->year);
+        $sheet->setCellValue('C2', strtoupper($context->periodLabel()));
         $sheet->setCellValue('C3', config('psed.regional_office'));
         $sheet->setCellValue('C4', $rows->count());
         $sheet->setCellValue('C5', $rows->where('sex', 'M')->count());

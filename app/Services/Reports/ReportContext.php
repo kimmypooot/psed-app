@@ -31,10 +31,45 @@ final class ReportContext
         public readonly ?FieldOffice $office,
         public readonly int $year,
         public readonly int $month,
+        /** Set when the report covers more (or other) than one calendar month: a year, a quarter or a range of dates. */
+        public readonly ?ReportPeriod $period = null,
     ) {
-        $this->start = CarbonImmutable::create($year, $month, 1)->startOfDay();
-        $this->end = $this->start->endOfMonth()->startOfDay();
+        $this->start = $period?->from ?? CarbonImmutable::create($year, $month, 1)->startOfDay();
+        $this->end = $period?->to ?? $this->start->endOfMonth()->startOfDay();
         $this->yearStart = CarbonImmutable::create($year, 1, 1)->startOfDay();
+    }
+
+    /** A report for a year, a quarter or a range of dates. (A single month is just `new self($office, $year, $month)`.) */
+    public static function forPeriod(?FieldOffice $office, ReportPeriod $period): self
+    {
+        return new self($office, $period->from->year, $period->to->month, $period->kind === ReportPeriod::MONTH ? null : $period);
+    }
+
+    /** Whether it covers something other than one calendar month. */
+    public function isRange(): bool
+    {
+        return $this->period !== null;
+    }
+
+    /** "October 2026", "Q2 2026", "2026", "Mar 1, 2026 to Apr 20, 2026": what the report says it covers. */
+    public function periodLabel(): string
+    {
+        return $this->period?->label ?? $this->monthName().' '.$this->year;
+    }
+
+    /**
+     * The month columns of an IPMR or MRAP to fill. One month for a Field Office's monthly report; January up to
+     * the chosen month for the consolidated one, because the template's earlier months hold one office's figures;
+     * and for a quarter or a year, every month in it.
+     *
+     * @return list<int>
+     */
+    public function monthsToFill(): array
+    {
+        $first = $this->period?->from->month ?? $this->month;
+        $last = $this->period?->to->month ?? $this->month;
+
+        return $this->isConsolidated() ? range(1, $last) : range($first, $last);
     }
 
     /** @var array{prepared: ?array{name: string, title: ?string}, approved: ?array{name: string, title: ?string}}|null */
@@ -108,9 +143,9 @@ final class ReportContext
         return $this->start->format('F');
     }
 
-    /** First day of the following month, which the reports are dated. */
+    /** The day after the report period ends, which the reports are dated (the first day of the next month, for a month). */
     public function nextMonthStart(): CarbonImmutable
     {
-        return $this->start->addMonth();
+        return $this->isRange() ? $this->end->addDay() : $this->start->addMonth();
     }
 }

@@ -10,6 +10,7 @@ use App\Services\Reports\MoaHydrator;
 use App\Services\Reports\MrapHydrator;
 use App\Services\Reports\ReportContext;
 use App\Services\Reports\ReportHydrator;
+use App\Services\Reports\ReportPeriod;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use RuntimeException;
 
@@ -33,9 +34,22 @@ class ExcelReportService
      */
     public function generate(ReportType $type, ?FieldOffice $office, int $year, int $month): array
     {
+        return $this->generateFor($type, $office, ReportPeriod::month($year, $month));
+    }
+
+    /**
+     * The same, for a month, a quarter, a year or a range of dates. The lists (MOA, Absorption) take any range;
+     * the IPMR and MRAP have a column per month, so they fill each month in it.
+     *
+     * @return array{path: string, name: string} a temporary file to send, then delete
+     */
+    public function generateFor(ReportType $type, ?FieldOffice $office, ReportPeriod $period): array
+    {
         $this->allowEnoughMemory();
 
-        $context = new ReportContext($office, $year, $month);
+        $year = $period->from->year;
+        $month = $period->from->month;
+        $context = $period->kind === ReportPeriod::MONTH ? new ReportContext($office, $year, $month) : ReportContext::forPeriod($office, $period);
 
         // 1. Open the existing template (never a blank workbook).
         $spreadsheet = IOFactory::load($this->templatePath($type));
@@ -56,7 +70,7 @@ class ExcelReportService
         $writer->save($path);
         $spreadsheet->disconnectWorksheets();
 
-        return ['path' => $path, 'name' => $type->downloadName($office, $year, $month)];
+        return ['path' => $path, 'name' => $type->downloadNameFor($office, $period)];
     }
 
     /** The newest template file matching the report's pattern. */
