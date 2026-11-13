@@ -27,6 +27,21 @@ class ReportDeadlines
         return Carbon::create($year, $month, 1)->addMonthNoOverflow()->day($this->day($type))->endOfDay();
     }
 
+    /**
+     * How timely a submission was: 5.0 if it came in before the deadline day, 4.0 on the deadline day itself,
+     * and null (no rating) if it was late.
+     */
+    public function rating(Carbon $due, Carbon $submittedAt): ?float
+    {
+        $days = (int) $submittedAt->copy()->startOfDay()->diffInDays($due->copy()->startOfDay(), false);
+
+        return match (true) {
+            $days >= 1 => 5.0,
+            $days === 0 => 4.0,
+            default => null,
+        };
+    }
+
     /** The usual day of the following month a report is due. */
     public function day(ReportType $type): int
     {

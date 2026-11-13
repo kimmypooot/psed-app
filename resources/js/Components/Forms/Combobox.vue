@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import Icon from '../UI/Icon.vue';
 import Spinner from '../UI/Spinner.vue';
 
@@ -74,6 +74,44 @@ const hidden = computed(() => matches.value.length - visible.value.length);
 const listId = computed(() => `${props.id}-listbox`);
 
 watch(visible, () => (active.value = 0));
+
+// The list is teleported to <body> and fixed to the field, so no modal, card or table around the field can
+// clip it. It opens downward, or upward when there is more room above.
+const anchor = ref(null);
+const floating = ref({});
+
+function place() {
+    const el = anchor.value;
+    if (!el) return;
+
+    const r = el.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom - 8;
+    const above = r.top - 8;
+    const up = below < 180 && above > below;
+
+    floating.value = {
+        left: `${r.left}px`,
+        width: `${r.width}px`,
+        maxHeight: `${Math.max(120, Math.min(256, up ? above : below))}px`,
+        ...(up ? { bottom: `${window.innerHeight - r.top + 4}px` } : { top: `${r.bottom + 4}px` }),
+    };
+}
+
+watch(open, (isOpen) => {
+    if (isOpen) {
+        place();
+        window.addEventListener('resize', place);
+        window.addEventListener('scroll', place, true);
+    } else {
+        window.removeEventListener('resize', place);
+        window.removeEventListener('scroll', place, true);
+    }
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', place);
+    window.removeEventListener('scroll', place, true);
+});
 
 function openList() {
     filtering.value = false;
@@ -151,7 +189,7 @@ function onFocusOut(e) {
             {{ label }}
             <span v-if="required" class="text-danger" aria-hidden="true"> *</span>
         </label>
-        <div class="relative" :class="{ 'mt-1': label }">
+        <div ref="anchor" class="relative" :class="{ 'mt-1': label }">
             <Icon name="search" size="sm" class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
             <input
                 :id="id"
@@ -202,12 +240,15 @@ function onFocusOut(e) {
             leave-active-class="transition duration-75 ease-in"
             leave-to-class="opacity-0"
         >
+            <Teleport to="body">
             <ul
                 v-if="open && !disabled"
                 :id="listId"
                 ref="list"
                 role="listbox"
-                class="absolute z-30 mt-1 max-h-64 w-full overflow-auto rounded-md border border-border bg-surface py-1 text-sm shadow-lg"
+                :style="floating"
+                class="fixed z-[70] overflow-auto rounded-md border border-border bg-surface py-1 text-sm shadow-lg"
+                @mousedown.prevent
             >
                 <template v-for="(option, i) in visible" :key="option.value">
                 <li v-if="heading(i)" role="presentation" class="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-text-muted">{{ heading(i) }}</li>
@@ -240,6 +281,7 @@ function onFocusOut(e) {
                     {{ hidden }} more. Keep typing to narrow the list.
                 </li>
             </ul>
+            </Teleport>
         </Transition>
     </div>
 </template>

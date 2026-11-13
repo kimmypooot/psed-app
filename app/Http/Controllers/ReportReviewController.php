@@ -35,11 +35,15 @@ class ReportReviewController extends Controller
 
         $offices = FieldOffice::orderBy('name')->get(['id', 'name', 'imis_code']);
 
-        $cells = fn (FieldOffice $o) => collect(ReportType::cases())->map(function (ReportType $type) use ($latest, $rows, $o, $due) {
+        $cells = fn (FieldOffice $o) => collect(ReportType::cases())->map(function (ReportType $type) use ($latest, $rows, $o, $due, $deadlines) {
             $current = $latest->get("{$o->id}:{$type->value}");
+            // Timeliness is judged on the first upload, so a later resubmission does not change the rating.
+            $first = $rows->first(fn (ReportSubmission $s) => $s->field_office_id === $o->id && $s->type === $type);
 
             return [
                 'type' => $type->value,
+                'rating' => $first?->submitted_at ? $deadlines->rating($due[$type->value], $first->submitted_at) : null,
+                'late' => $first?->submitted_at !== null && $deadlines->rating($due[$type->value], $first->submitted_at) === null,
                 'overdue' => now()->gt($due[$type->value]) && ($current === null || $current->status === SubmissionStatus::Returned),
                 'current' => $current?->present(),
                 'earlier' => $rows->filter(fn (ReportSubmission $s) => $s->field_office_id === $o->id && $s->type === $type && $s->id !== $current?->id)

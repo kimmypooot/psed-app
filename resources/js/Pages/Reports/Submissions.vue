@@ -124,14 +124,23 @@ const sendBack = () =>
         <Table>
             <thead>
                 <tr>
-                    <th scope="col">Field Office</th>
-                    <th v-for="t in types" :key="t.value" scope="col">{{ t.label }}<span class="block text-xs font-normal text-text-muted">due {{ shortDate(t.due) }}</span></th>
+                    <th scope="col" rowspan="2" class="align-middle">Field Office</th>
+                    <th v-for="t in types" :key="t.value" scope="colgroup" colspan="2" class="border-b border-l border-border text-center">
+                        {{ t.label }}<span class="block text-xs font-normal text-text-muted">due {{ shortDate(t.due) }}</span>
+                    </th>
+                </tr>
+                <tr>
+                    <template v-for="t in types" :key="t.value">
+                        <th scope="col" class="border-l border-border">Status</th>
+                        <th scope="col">Rating</th>
+                    </template>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="o in offices" :key="o.id">
                     <td class="font-medium">{{ o.name }}</td>
-                    <td v-for="c in o.cells" :key="c.type">
+                    <template v-for="c in o.cells" :key="c.type">
+                    <td class="border-l border-border">
                         <button
                             v-if="c.current"
                             type="button"
@@ -143,6 +152,12 @@ const sendBack = () =>
                         </button>
                         <Badge v-else :tone="c.overdue ? 'danger' : 'neutral'">{{ c.overdue ? 'Overdue' : 'Not yet' }}</Badge>
                     </td>
+                    <td class="tabular-nums">
+                        <span v-if="c.rating !== null" class="font-semibold">{{ c.rating.toFixed(1) }}</span>
+                        <span v-else-if="c.late" class="text-xs text-text-muted">Late</span>
+                        <span v-else class="text-text-muted">—</span>
+                    </td>
+                    </template>
                 </tr>
             </tbody>
         </Table>
