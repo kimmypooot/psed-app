@@ -8,6 +8,7 @@ import Card from '@/Components/UI/Card.vue';
 import Table from '@/Components/UI/Table.vue';
 import Icon from '@/Components/UI/Icon.vue';
 import Badge from '@/Components/UI/Badge.vue';
+import ProgressBar from '@/Components/UI/ProgressBar.vue';
 
 const props = defineProps({
     generatedAt: { type: String, required: true },
@@ -17,6 +18,8 @@ const props = defineProps({
     recent: { type: Array, required: true },
     /** The oldest appointments still waiting for action. */
     waiting: { type: Array, default: () => [] },
+    /** A Field Office's balance carried into the year, and how much of it is still waiting (null for PSED, or when there is none). */
+    balance: { type: Object, default: null },
     /** This month, as the appointments list's date filter takes it. */
     month: { type: Object, required: true },
     rule: { type: Object, default: null },
@@ -80,6 +83,38 @@ const actionTone = (action) =>
             </Link>
             <MetricCard label="First-time entrants" :value="stats.first_time" icon="userPlus" tone="info">absorbed this month</MetricCard>
         </div>
+
+        <!-- What this office carried into the year, and how much of it is still waiting -->
+        <Card
+            v-if="balance"
+            class="mt-4"
+            :title="`Carried over from ${balance.year - 1}`"
+            icon="archive"
+            :description="`Appointments still unacted on December 31, ${balance.year - 1}, and how many of them have been acted on since.`"
+        >
+            <dl class="grid gap-4 sm:grid-cols-3">
+                <div>
+                    <dt class="text-xs text-text-muted">Opening balance</dt>
+                    <dd class="text-2xl font-bold tabular-nums">{{ balance.value }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-text-muted">Acted on since January</dt>
+                    <dd class="text-2xl font-bold text-success tabular-nums">{{ balance.acted }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs text-text-muted">Still waiting</dt>
+                    <dd class="text-2xl font-bold tabular-nums" :class="balance.remaining ? 'text-primary' : 'text-success'">{{ balance.remaining }}</dd>
+                </div>
+            </dl>
+            <div class="mt-4">
+                <ProgressBar :value="balance.value ? Math.round((balance.acted / balance.value) * 100) : 100" label="Share of the opening balance acted on" tone="success" />
+            </div>
+            <p class="mt-3 text-xs text-text-muted">
+                <template v-if="balance.source === 'psed'">Set by PSED<span v-if="balance.set_by"> ({{ balance.set_by }})</span><span v-if="balance.set_at"> on {{ formatDate(balance.set_at.slice(0, 10)) }}</span>.</template>
+                <template v-else>PSED has not set this balance, so it is counted from the appointments in CARES.</template>
+                <span v-if="balance.note"> Note: {{ balance.note }}</span>
+            </p>
+        </Card>
 
         <div class="mt-4 grid gap-4 lg:grid-cols-3">
             <Card title="Received and acted, by month" icon="chartBar" class="lg:col-span-2">

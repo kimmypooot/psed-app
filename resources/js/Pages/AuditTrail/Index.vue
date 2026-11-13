@@ -1,10 +1,9 @@
 <script setup>
-import { computed, ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { Head, router } from '@inertiajs/vue3';
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Button from '@/Components/UI/Button.vue';
-import Card from '@/Components/UI/Card.vue';
 import Table from '@/Components/UI/Table.vue';
 import Badge from '@/Components/UI/Badge.vue';
 import Icon from '@/Components/UI/Icon.vue';
@@ -12,7 +11,6 @@ import Pagination from '@/Components/UI/Pagination.vue';
 import EmptyState from '@/Components/UI/EmptyState.vue';
 import Modal from '@/Components/Feedback/Modal.vue';
 import SearchBox from '@/Components/Forms/SearchBox.vue';
-import Combobox from '@/Components/Forms/Combobox.vue';
 import TextInput from '@/Components/Forms/TextInput.vue';
 import { useListFilters } from '@/Composables/useListFilters';
 import { formatDateTime } from '@/Utils/datetime';
@@ -34,7 +32,36 @@ const reset = () => {
     for (const key of ['group', 'search', 'date_from', 'date_to', 'subject']) filters[key] = '';
 };
 
+// "What" as a row of choices, the way the Qualification Standards page shows its categories.
+const categories = computed(() => [{ value: '', label: 'Everything' }, ...props.groups]);
+
+// Dim the list while a new one loads, so a filter visibly "took".
+const loading = ref(false);
+const listeners = [];
+onMounted(() => {
+    listeners.push(
+        router.on('start', (event) => (loading.value = event.detail.visit.method === 'get' && event.detail.visit.preserveState === true)),
+        router.on('finish', () => (loading.value = false)),
+    );
+});
+onBeforeUnmount(() => listeners.forEach((stop) => stop()));
+
+// The left edge of a row has the colour of what was done, as the badge does (written out so Tailwind finds each class).
+const rails = {
+    success: 'shadow-[inset_3px_0_0_var(--color-success)]',
+    info: 'shadow-[inset_3px_0_0_var(--color-info)]',
+    warning: 'shadow-[inset_3px_0_0_var(--color-warning)]',
+    danger: 'shadow-[inset_3px_0_0_var(--color-danger)]',
+    neutral: 'shadow-[inset_3px_0_0_var(--color-border-strong)]',
+};
+
 const viewing = ref(null);
+
+// A click anywhere on a row opens what changed, except on the buttons inside it, which do their own thing.
+const openRow = (event, entry) => {
+    if (!entry.changes.length || event.target.closest('a, button, input, select, label')) return;
+    viewing.value = entry;
+};
 </script>
 
 <template>
@@ -47,30 +74,44 @@ const viewing = ref(null);
             :breadcrumbs="[{ label: 'Settings' }, { label: 'Audit Trail' }]"
         />
 
-        <Card class="mb-4">
-            <div class="flex flex-wrap items-end gap-3">
+        <!-- What kind of thing, as a row of choices -->
+        <nav class="mb-4 flex flex-wrap gap-2" aria-label="What happened">
+            <button
+                v-for="c in categories"
+                :key="c.value"
+                type="button"
+                class="rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+                :class="(filters.group || '') === c.value ? 'border-primary bg-primary text-white' : 'border-border bg-surface text-text hover:border-primary/40 hover:text-primary'"
+                :aria-pressed="(filters.group || '') === c.value"
+                @click="filters.group = c.value"
+            >
+                {{ c.label }}
+            </button>
+        </nav>
+
+        <!-- Who, and when -->
+        <div class="mb-3 flex flex-wrap items-end gap-3">
+            <div class="flex min-w-64 max-w-xl flex-1">
                 <SearchBox v-model="filters.search" placeholder="Search by person's name or username" label="Search by person" />
-                <div class="w-56">
-                    <label for="f-group" class="block text-sm font-medium text-text">What</label>
-                    <Combobox :allow-custom="false" id="f-group" v-model="filters.group" :options="groups" placeholder="Everything" class="mt-1" />
-                </div>
-                <div class="w-40">
-                    <TextInput id="f-from" v-model="filters.date_from" type="date" label="From" />
-                </div>
-                <div class="w-40">
-                    <TextInput id="f-to" v-model="filters.date_to" type="date" label="Until" />
-                </div>
-                <Button v-if="hasFilters" variant="ghost" size="sm" @click="reset"><Icon name="close" size="sm" />Clear filters</Button>
             </div>
-            <p v-if="filters.subject" class="mt-3 flex items-center gap-2 rounded-md bg-info-bg px-3 py-2 text-sm text-info">
-                <Icon name="clock" size="sm" />
-                Showing the history of one record only.
-                <button type="button" class="font-medium underline" @click="filters.subject = ''">Show everything</button>
-            </p>
-        </Card>
+            <div class="w-40">
+                <TextInput id="f-from" v-model="filters.date_from" type="date" label="From" />
+            </div>
+            <div class="w-40">
+                <TextInput id="f-to" v-model="filters.date_to" type="date" label="Until" />
+            </div>
+            <Button v-if="hasFilters" variant="ghost" size="sm" @click="reset"><Icon name="close" size="sm" />Clear all</Button>
+        </div>
+
+        <p v-if="filters.subject" class="mb-3 flex items-center gap-2 rounded-md bg-info-bg px-3 py-2 text-sm text-info">
+            <Icon name="clock" size="sm" />
+            Showing the history of one record only.
+            <button type="button" class="font-medium underline focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring" @click="filters.subject = ''">Show everything</button>
+        </p>
 
         <p class="mb-2 text-sm text-text-muted" aria-live="polite">{{ entries.total }} entr{{ entries.total === 1 ? 'y' : 'ies' }}</p>
 
+        <div class="transition-opacity duration-150 motion-reduce:transition-none" :class="loading ? 'opacity-60' : ''" :aria-busy="loading">
         <Table :empty="!entries.data.length">
             <template #empty>
                 <EmptyState icon="activity" title="Nothing recorded for these filters" description="Try widening the dates or clearing a filter." />
@@ -86,7 +127,7 @@ const viewing = ref(null);
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="e in entries.data" :key="e.id">
+                <tr v-for="e in entries.data" :key="e.id" :class="[rails[e.tone] ?? rails.neutral, e.changes.length ? 'cursor-pointer' : '']" @click="openRow($event, e)">
                     <td class="whitespace-nowrap">{{ formatDateTime(e.at) }}</td>
                     <td>
                         <span v-if="e.user" class="font-medium">{{ e.user }}</span>
@@ -102,6 +143,7 @@ const viewing = ref(null);
                 </tr>
             </tbody>
         </Table>
+        </div>
 
         <Pagination
             :prev-url="entries.prev_page_url"

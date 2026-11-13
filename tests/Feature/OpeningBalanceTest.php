@@ -253,4 +253,41 @@ class OpeningBalanceTest extends TestCase
         $this->put('/settings/opening-balances', ['year' => 2026, 'balances' => [['field_office_id' => $this->office->id, 'unacted' => 5]]])->assertForbidden();
         $this->assertSame(0, OpeningBalance::count());
     }
+
+    // ------------------------------------------------------------------ what a Field Office sees
+
+    public function test_a_field_office_sees_the_balance_it_carries_in_and_how_much_of_it_is_still_waiting(): void
+    {
+        $this->travelTo('2026-10-15 09:00:00');
+        $fo = User::factory()->fieldOffice($this->office->id)->create();
+        OpeningBalance::create(['field_office_id' => $this->office->id, 'year' => 2026, 'unacted' => 12, 'note' => 'Per the December report', 'updated_by' => $this->psed->id]);
+        $this->appointments($this->office, 3, ['date_received' => '2025-11-20', 'csc_action' => 'Approved', 'action_date' => '2026-03-05']);
+
+        $this->actingAs($fo)->get('/dashboard')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('balance.year', 2026)->where('balance.value', 12)->where('balance.acted', 3)->where('balance.remaining', 9)
+            ->where('balance.source', 'psed')->where('balance.note', 'Per the December report')->where('balance.set_by', $this->psed->name));
+    }
+
+    public function test_without_a_balance_set_the_office_sees_what_its_own_appointments_show_or_nothing(): void
+    {
+        $this->travelTo('2026-10-15 09:00:00');
+        $fo = User::factory()->fieldOffice($this->office->id)->create();
+
+        $this->actingAs($fo)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('balance', null));
+
+        $this->appointments($this->office, 4, ['date_received' => '2025-11-20']);
+
+        $this->flushSession()->actingAs($fo)->get('/dashboard')->assertInertia(fn (Assert $page) => $page
+            ->where('balance.value', 4)->where('balance.source', 'system')->where('balance.set_by', null));
+    }
+
+    public function test_an_office_never_sees_another_offices_balance_and_psed_has_its_own_page(): void
+    {
+        $this->travelTo('2026-10-15 09:00:00');
+        OpeningBalance::create(['field_office_id' => $this->other->id, 'year' => 2026, 'unacted' => 30]);
+        $fo = User::factory()->fieldOffice($this->office->id)->create();
+
+        $this->actingAs($fo)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('balance', null));
+        $this->flushSession()->actingAs($this->psed)->get('/dashboard')->assertInertia(fn (Assert $page) => $page->where('balance', null));
+    }
 }

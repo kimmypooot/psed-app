@@ -347,6 +347,27 @@ class SummaryDatabase
         return [$best, $bestScore];
     }
 
+
+    /**
+     * The row worth suggesting for an agency that matched none: the one whose distinctive name is most alike. The
+     * "Regional Office VIII" most agencies end in says nothing, so it is left out of the comparison; and a
+     * suggestion is made only when it is close, because a wrong one is worse than none.
+     */
+    private function suggest(string $agency, array $rowOf): ?int
+    {
+        $core = fn (string $name) => trim(preg_replace('/\s+/', ' ', preg_replace('/\b(regional office|region|office|viii)\b/', ' ', $this->tidy($name))));
+
+        $best = null;
+        $bestScore = 0.0;
+        foreach ($rowOf as $candidate => $row) {
+            similar_text($core($agency), $core((string) $candidate), $score);
+            if ($score > $bestScore) {
+                [$best, $bestScore] = [$row, $score];
+            }
+        }
+
+        return $bestScore >= 75 ? $best : null;
+    }
     /**
      * What PSED has paired by hand: office id => CARES agency name => the workbook's agency, or null for "no row of its own".
      *
@@ -393,13 +414,13 @@ class SummaryDatabase
                 $paired = array_key_exists($agency, $aliases[$office->id] ?? []);
                 $template = $paired ? $aliases[$office->id][$agency] : null;
                 $row = $paired ? null : $this->match($agency, $rowOf);
-                [$nearRow, $score] = $paired || $row ? [null, 0.0] : $this->closest($this->tidy($agency), $rowOf);
+                $near = $paired || $row ? null : $this->suggest($agency, $rowOf);
 
                 $items[] = [
                     'agency' => $agency,
                     'status' => $paired ? ($template === null ? 'none' : 'mapped') : ($row ? 'auto' : 'unmatched'),
                     'template' => $paired ? $template : ($row ? $block['agencies'][$row] : null),
-                    'suggestion' => $nearRow !== null && $score >= 60 ? $block['agencies'][$nearRow] : null,
+                    'suggestion' => $near !== null ? $block['agencies'][$near] : null,
                 ];
             }
 

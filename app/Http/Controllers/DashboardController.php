@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Enums\Processor;
 use App\Models\Appointment;
 use App\Models\FieldOffice;
+use App\Models\OpeningBalance;
+use App\Services\OpeningBalances;
+use App\Services\Reports\MonthlyFigures;
+use App\Services\Reports\ReportContext;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -35,6 +39,8 @@ class DashboardController extends Controller
             'stats' => $this->stats($officeId, $start, $end),
             'trend' => $this->trend($officeId, $today),
             'offices' => $user->seesAllOffices() ? $this->officeRows($start, $end) : [],
+            // A Field Office is shown what PSED set (or what the appointments show) as its balance carried in.
+            'balance' => $officeId ? $this->balance($officeId, $today) : null,
         ]);
 
         $office = $user->fieldOffice;
@@ -85,6 +91,7 @@ class DashboardController extends Controller
             ] : null,
             // PSED monitoring: every Field Office at a glance.
             'offices' => $figures['offices'],
+            'balance' => $figures['balance'],
         ]);
     }
 
@@ -118,6 +125,41 @@ class DashboardController extends Controller
             Processor::FieldOffice->value,
             Processor::Psed->value,
         ]];
+    }
+
+    /**
+     * The appointments an office carried into this year (unacted on 31 December), how many of them have been
+     * acted on since, and who said so. Nothing to show when there was no balance.
+     *
+     * @return array{year: int, value: int, remaining: int, acted: int, source: string, note: ?string, set_by: ?string, set_at: ?string}|null
+     */
+    private function balance(int $officeId, CarbonImmutable $today): ?array
+    {
+        $office = FieldOffice::find($officeId);
+        if ($office === null) {
+            return null;
+        }
+
+        $balance = app(OpeningBalances::class)->for($office, $today->year);
+        $set = OpeningBalance::with('updater:id,name')->where('field_office_id', $officeId)->where('year', $today->year)->first();
+
+        if ($balance['value'] === 0 && $set === null) {
+            return null;
+        }
+
+        // What is still unacted of it at the end of this month, by the same rule as the MRAP's section G.
+        $left = MonthlyFigures::compute(new ReportContext($office, $today->year, $today->month), [$today->month])[$today->month]['backlog_end'];
+
+        return [
+            'year' => $today->year,
+            'value' => $balance['value'],
+            'remaining' => $left,
+            'acted' => max(0, $balance['value'] - $left),
+            'source' => $balance['source'],
+            'note' => $set?->note,
+            'set_by' => $set?->updater?->name,
+            'set_at' => $set?->updated_at?->toIso8601String(),
+        ];
     }
 
     /** @return array<string, int> */
