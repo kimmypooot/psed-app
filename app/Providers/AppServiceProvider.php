@@ -5,7 +5,9 @@ namespace App\Providers;
 use App\Enums\Processor;
 use App\Models\FieldOffice;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -17,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        // Production: HTTPS only.
+        if ($this->app->isProduction()) {
+            URL::forceHttps();
+        }
+
+
         // Which Field Office is headed by whom, and who signs the reports:
         // the settings that drive routing are for PSED administrators only.
         Gate::define('manage-offices', fn (User $user) => $user->isAdmin());

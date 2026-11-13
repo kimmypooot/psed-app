@@ -67,7 +67,7 @@
         </div>
         {{-- When the screen started, for app.js to hold it long enough to read
              as deliberate (and to skip it if the page was ready first). --}}
-        <script>window.__bootAt = performance.now();</script>
+        <script nonce="{{ Vite::cspNonce() }}">window.__bootAt = performance.now();</script>
     @endif
     @inertia
 </body>

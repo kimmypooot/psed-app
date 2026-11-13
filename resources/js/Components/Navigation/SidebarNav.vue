@@ -89,7 +89,7 @@ const entries = computed(() =>
             const visible = item.localOnly && !page.props.app?.local ? [] : groupChildren(item);
 
             if (visible.length) {
-                acc.push({ type: 'group', label: item.group, icon: item.icon, items: visible });
+                acc.push({ type: 'group', label: item.group, icon: item.icon, fixed: !!item.fixed, items: visible });
             }
 
             return acc;
@@ -188,6 +188,32 @@ const linkClass = (href) => {
                 {{ entry.label }}
                 <span v-if="badgeCount(entry)" :class="badgeClass">{{ badgeText(badgeCount(entry)) }}<span class="sr-only"> new</span></span>
             </Link>
+
+            <!-- A fixed group (Appointments): a label with its pages always shown beneath it, nothing to open or close -->
+            <div v-else-if="entry.fixed" role="group" :aria-labelledby="groupId(entry)">
+                <p :id="groupId(entry)" class="flex items-center gap-3 px-3 py-2 text-sm font-medium text-white/80">
+                    <Icon :name="entry.icon || 'grid'" size="sm" />
+                    {{ entry.label }}
+                </p>
+                <ul class="mt-0.5 space-y-0.5">
+                    <li v-for="item in entry.items" :key="item.href">
+                        <Link
+                            :href="item.href"
+                            class="flex items-center gap-3 rounded-md py-1.5 pr-3 pl-9 text-sm transition-colors"
+                            :class="linkClass(item.href)"
+                            :aria-current="isActive(item.href) ? 'page' : undefined"
+                            @click="$emit('navigate')"
+                        >
+                            <span
+                                class="h-1.5 w-1.5 shrink-0 rounded-full border"
+                                :class="isActive(item.href) ? 'border-white bg-white' : 'border-current'"
+                                aria-hidden="true"
+                            />
+                            {{ item.label }}
+                        </Link>
+                    </li>
+                </ul>
+            </div>
 
             <!-- Admin: collapsible group -->
             <div v-else-if="variant === 'admin'">

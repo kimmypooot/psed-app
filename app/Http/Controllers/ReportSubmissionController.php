@@ -139,6 +139,8 @@ class ReportSubmissionController extends Controller
         abort_unless($user->seesAllOffices() || $user->field_office_id === $submission->field_office_id, 403);
         abort_unless(Storage::disk('local')->exists($submission->file_path), 404);
 
+        AuditLog::record('report.download', $submission, after: ['file' => $submission->file_name]);
+
         return response()->download(Storage::disk('local')->path($submission->file_path), $submission->file_name, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'X-Content-Type-Options' => 'nosniff',

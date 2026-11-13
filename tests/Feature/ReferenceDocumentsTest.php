@@ -98,7 +98,7 @@ class ReferenceDocumentsTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->has('documents.data', 1)
                 ->where('documents.data.0.type_label', 'Qualification Standard')
-                ->where('types.0.value', 'qualification_standard'));
+                ->where('types', fn ($types) => collect($types)->contains('value', 'qualification_standard')));
     }
 
     // --------------------------------------------------------------- managing
@@ -214,5 +214,47 @@ class ReferenceDocumentsTest extends TestCase
         $doc = ReferenceDocument::create(['title' => 'Text only', 'type' => 'policy']);
 
         $this->actingAs($this->fo)->get("/qualification-standards/{$doc->id}/file")->assertNotFound();
+    }
+
+    // --------------------------------------------------------------- categories
+
+    public function test_the_library_is_organised_in_categories_for_the_rules_on_appointments(): void
+    {
+        $this->actingAs($this->admin)->get('/qualification-standards')->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('types', fn ($types) => collect($types)->pluck('label')->take(8)->all() === [
+                '2025 ORA-OHRA', 'CSC Memorandum', 'CHED Memorandum', 'DBM Memorandum', 'Law', 'Rules and Regulations', 'Policy', 'Qualification Standard',
+            ])
+            ->where('types', fn ($types) => collect($types)->every(fn ($t) => filled($t['description']) && $t['count'] === 0))
+            ->where('total', 0));
+    }
+
+    public function test_a_document_is_filed_under_a_category_and_counted_there(): void
+    {
+        foreach (['ora_ohra_2025' => 'The 2025 ORA-OHRA', 'csc_memorandum' => 'CSC MC on appointments', 'ched_memorandum' => 'CMO on teaching qualifications', 'dbm_memorandum' => 'DBM circular', 'law' => 'Republic Act'] as $type => $title) {
+            $this->actingAs($this->admin)->post('/qualification-standards', $this->payload(['title' => $title, 'type' => $type]))->assertRedirect('/qualification-standards');
+        }
+        ReferenceDocument::create(['title' => 'Another CSC memo', 'type' => 'csc_memorandum']);
+
+        $this->actingAs($this->fo)->get('/qualification-standards')->assertInertia(fn (Assert $page) => $page
+            ->where('total', 6)
+            ->where('types', fn ($types) => collect($types)->pluck('count', 'value')->only(['ora_ohra_2025', 'csc_memorandum', 'ched_memorandum', 'dbm_memorandum', 'law', 'policy'])->all()
+                === ['ora_ohra_2025' => 1, 'csc_memorandum' => 2, 'ched_memorandum' => 1, 'dbm_memorandum' => 1, 'law' => 1, 'policy' => 0]));
+
+        $this->get('/qualification-standards?type=csc_memorandum')->assertInertia(fn (Assert $page) => $page
+            ->has('documents.data', 2)->where('documents.data.0.type_label', 'CSC Memorandum')->where('documents.total', 2)->where('total', 6));
+    }
+
+    public function test_the_old_generic_categories_show_only_while_documents_are_filed_under_them(): void
+    {
+        $has = fn (string $value) => fn ($types) => collect($types)->contains('value', $value);
+
+        $this->actingAs($this->admin)->get('/qualification-standards')->assertInertia(fn (Assert $page) => $page
+            ->where('types', fn ($types) => ! collect($types)->contains('value', 'memorandum')));
+
+        ReferenceDocument::create(['title' => 'Old memo', 'type' => 'memorandum']);
+
+        $this->get('/qualification-standards')->assertInertia(fn (Assert $page) => $page->where('types', $has('memorandum')));
+        // ...and an old document can still be filtered and edited.
+        $this->get('/qualification-standards?type=memorandum')->assertInertia(fn (Assert $page) => $page->has('documents.data', 1));
     }
 }

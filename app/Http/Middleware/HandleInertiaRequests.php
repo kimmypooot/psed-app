@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\FieldOffice;
 use App\Support\Navigation;
 use App\Support\Security\SessionLimits;
 use Illuminate\Http\Request;
@@ -31,6 +32,12 @@ class HandleInertiaRequests extends Middleware
                     'role' => $user->role->value,
                     'role_label' => $user->role->label(),
                     'office' => $user->fieldOffice?->name,
+                    'office_id' => $user->field_office_id,
+                    // The Field Offices a person who heads several can switch between (empty for everyone else).
+                    'offices' => count($ids = $user->workOfficeIds()) > 1
+                        ? FieldOffice::whereIn('id', $ids)->orderBy('name')->get(['id', 'name', 'imis_code'])
+                            ->map(fn (FieldOffice $o) => ['id' => $o->id, 'name' => $o->name, 'code' => $o->imis_code])->all()
+                        : [],
                     'sees_all_offices' => $user->seesAllOffices(),
                 ] : null,
                 // For hiding controls only (useAuthorization); every route

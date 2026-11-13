@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -30,6 +31,12 @@ class AppointmentController extends Controller
         'agency' => 'agency',
         'salary_grade' => 'salary_grade',
     ];
+
+    /** Rows per page the list offers; the first is the default. */
+    private const PAGE_SIZES = [15, 25, 50, 100];
+
+    /** Above this many matches the total is cached briefly: counting a big table on every page is the slow part. */
+    private const CACHE_COUNT_ABOVE = 10000;
 
     public function __construct(
         private readonly LookupService $lookups,
@@ -53,16 +60,26 @@ class AppointmentController extends Controller
             'office' => ['nullable', 'integer'],
             'sort' => ['nullable', 'in:'.implode(',', array_keys(self::SORTS))],
             'dir' => ['nullable', 'in:asc,desc'],
+            'per_page' => ['nullable', 'in:'.implode(',', self::PAGE_SIZES)],
         ]);
+        $perPage = (int) ($filters['per_page'] ?? self::PAGE_SIZES[0]);
 
-        $query = Appointment::query()->with('fieldOffice:id,name')
+        // Plantilla or Casual / Contractual (the route's), or both when asked for the whole list.
+        $type = $request->route('type');
+
+        $query = Appointment::query()
+            ->ofType($type)
             ->when(! $user->seesAllOffices(), fn (Builder $q) => $q->where('field_office_id', $user->field_office_id))
             ->when($user->seesAllOffices() && ! empty($filters['office']), fn (Builder $q) => $q->where('field_office_id', $filters['office']))
             ->search($filters['search'] ?? null)
             ->when(! empty($filters['sg']), fn (Builder $q) => $q->where('salary_grade', $filters['sg']))
-            ->when(! empty($filters['agency']), fn (Builder $q) => $q->where('agency', 'like', '%'.$filters['agency'].'%'))
-            ->when(! empty($filters['date_from']), fn (Builder $q) => $q->whereDate('date_received', '>=', $filters['date_from']))
-            ->when(! empty($filters['date_to']), fn (Builder $q) => $q->whereDate('date_received', '<=', $filters['date_to']))
+            // Picked from the list (the usual case): an exact, indexed match. Typed text: contains.
+            ->when(! empty($filters['agency']), fn (Builder $q) => Appointment::where('agency', $filters['agency'])->exists()
+                ? $q->where('agency', $filters['agency'])
+                : $q->where('agency', 'like', '%'.addcslashes($filters['agency'], '\%_').'%'))
+            // Plain comparisons on the DATE column, so the index is used (whereDate would wrap it in DATE()).
+            ->when(! empty($filters['date_from']), fn (Builder $q) => $q->where('date_received', '>=', $filters['date_from']))
+            ->when(! empty($filters['date_to']), fn (Builder $q) => $q->where('date_received', '<=', $filters['date_to']))
             ->when(! empty($filters['processor']), fn (Builder $q) => $q->where('processed_by', $filters['processor']))
             ->when(($filters['status'] ?? null) === 'pending', fn (Builder $q) => $q->unacted())
             ->when(($filters['status'] ?? null) === 'acted', fn (Builder $q) => $q->acted());
@@ -71,9 +88,18 @@ class AppointmentController extends Controller
         $dir = $filters['dir'] ?? 'desc';
         $query->orderBy($sort, $dir)->orderBy('id', 'desc');
 
-        $appointments = $query->paginate(15)->withQueryString();
+        // Two steps keep deep pages fast: page through the ids alone (the database can walk an index
+        // without reading whole rows), then load only the 15 rows shown.
+        $query->select('appointments.id');
+        $appointments = $query->paginate($perPage, total: $this->total($query))->withQueryString();
+        $rows = Appointment::query()->with('fieldOffice:id,name')
+            ->whereIn('id', $appointments->getCollection()->pluck('id'))->get()->keyBy('id');
+        $appointments->setCollection(
+            $appointments->getCollection()->map(fn ($row) => $rows->get($row->id))->filter()->values()
+        );
 
         return Inertia::render('Appointments/Index', [
+            'type' => $type,
             'appointments' => [
                 'data' => $appointments->getCollection()->map(fn (Appointment $a) => $this->summary($a, $request))->values(),
                 'current_page' => $appointments->currentPage(),
@@ -93,10 +119,76 @@ class AppointmentController extends Controller
                 'office' => $filters['office'] ?? '',
                 'sort' => $filters['sort'] ?? 'date_received',
                 'dir' => $dir,
+                'per_page' => (string) $perPage,
             ],
+            // The tabs and the Pending / Acted upon switch: counts of the whole list, not of what the filters leave.
+            'counts' => $this->counts($user->seesAllOffices() ? ($filters['office'] ?? null) : $user->field_office_id, $type),
+            'pageSizes' => self::PAGE_SIZES,
             'agencies' => $this->lookups->agenciesFor($user->seesAllOffices() ? ($filters['office'] ?? null) : $user->field_office_id),
             'offices' => $user->seesAllOffices() ? $this->lookups->offices() : [],
         ]);
+    }
+
+    /**
+     * What the list header shows: how many appointments there are in all, on each MOA sheet, and, within the
+     * list being viewed, how many are still pending and how many have been acted upon. One pass over the office's
+     * appointments, kept for a minute and dropped whenever an appointment changes (Appointment::bumpStatsVersion).
+     *
+     * @return array{all: int, plantilla: int, casual: int, pending: int, acted: int}
+     */
+    private function counts(?int $officeId, ?string $type): array
+    {
+        $key = sprintf('appointments.counts.v%d.%s.%s', Appointment::statsVersion(), $officeId ?? 'all', $type ?? 'any');
+
+        return Cache::remember($key, 60, function () use ($officeId, $type) {
+            $casual = config('psed.casual_contractual_statuses');
+            $marks = implode(',', array_fill(0, count($casual), '?'));
+            $isCasual = "employment_status IN ({$marks})";
+            $inList = match ($type) {
+                Appointment::TYPE_PLANTILLA => "NOT ({$isCasual})",
+                Appointment::TYPE_CASUAL => $isCasual,
+                default => '1 = 1',
+            };
+            $inListBindings = $type === null ? [] : $casual;
+            $pending = "(action_date IS NULL OR csc_action IS NULL OR csc_action = 'Pending')";
+
+            $row = Appointment::query()
+                ->when($officeId, fn (Builder $q) => $q->where('field_office_id', $officeId))
+                ->selectRaw(
+                    "COUNT(*) AS total, COALESCE(SUM({$isCasual}), 0) AS casual, COALESCE(SUM({$inList}), 0) AS in_list, COALESCE(SUM({$inList} AND {$pending}), 0) AS pending",
+                    [...$casual, ...$inListBindings, ...$inListBindings],
+                )
+                ->toBase()->first();
+
+            return [
+                'all' => (int) $row->total,
+                'plantilla' => (int) $row->total - (int) $row->casual,
+                'casual' => (int) $row->casual,
+                'pending' => (int) $row->pending,
+                'acted' => (int) $row->in_list - (int) $row->pending,
+            ];
+        });
+    }
+
+    /**
+     * The number of rows the query matches. Small results are counted fresh every time; a large one is
+     * remembered for a minute per filter, so paging through it does not re-count it on every click.
+     */
+    private function total(Builder $query): int
+    {
+        $key = 'appointments.total.'.md5($query->toSql().'|'.json_encode($query->getBindings()));
+
+        if (($cached = Cache::get($key)) !== null) {
+            return (int) $cached;
+        }
+
+        $total = $query->toBase()->getCountForPagination();
+
+        if ($total > self::CACHE_COUNT_ABOVE) {
+            Cache::put($key, $total, 60);
+        }
+
+        return $total;
     }
 
     /**
@@ -120,6 +212,56 @@ class AppointmentController extends Controller
             default => $date($a->publication_start ?? $a->publication_end),
         };
 
+        $casual = $a->isCasualContractual();
+        $decided = $a->isActed();
+        $rejected = in_array($a->csc_action, config('psed.rejected_actions'), true);
+        $plural = fn (int $n) => $n.' '.($n === 1 ? 'day' : 'days');
+
+        // Days from receipt to the decision, or to today while it waits (never negative if a date was mistyped).
+        $days = $a->date_received
+            ? max(0, (int) $a->date_received->diffInDays($decided ? $a->action_date : now()->startOfDay()))
+            : null;
+
+        // Where it stands, in a line, for the top of the dialog.
+        $glance = [
+            'status' => $a->csc_action ?? 'Pending',
+            'kind' => $casual ? 'Casual / Contractual' : 'Plantilla',
+            'received' => $date($a->date_received),
+            'waited' => match (true) {
+                $days === null => null,
+                $decided => $days === 0 ? 'Acted the same day' : 'Acted in '.$plural($days),
+                $days === 0 => 'Received today',
+                default => 'Waiting '.$plural($days),
+            },
+            'overdue_days' => $decided ? null : $days,
+            'agency' => $a->agency,
+            'office' => $office?->name,
+            'salary_grade' => $a->salary_grade,
+        ];
+
+        // Received, acted, released: what has happened and when.
+        $timeline = [
+            ['label' => 'Received', 'date' => $date($a->date_received), 'state' => 'done', 'tone' => 'neutral'],
+            ['label' => $decided ? $a->csc_action : 'Action', 'date' => $decided ? $date($a->action_date) : 'Not yet', 'state' => $decided ? 'done' : 'waiting', 'tone' => $decided ? ($rejected ? 'danger' : 'success') : 'info'],
+            ...($rejected && ! $a->release_date ? [] : [['label' => 'Released', 'date' => $a->release_date ? $date($a->release_date) : 'Not yet', 'state' => $a->release_date ? 'done' : 'waiting', 'tone' => $a->release_date ? 'success' : 'neutral']]),
+        ];
+
+        // Why it is pending, or why it was not approved, said where it is seen first.
+        $callout = match (true) {
+            ! $decided && filled($a->pending_reason) => ['tone' => 'info', 'title' => 'Why it is pending', 'text' => $a->pending_reason],
+            $rejected && filled($a->disapproval_reason) => ['tone' => 'danger', 'title' => 'Why it was not approved', 'text' => $a->disapproval_reason],
+            default => null,
+        };
+
+        // Only what is true: the yes/no rows that were mostly "No" are marks.
+        $flags = array_values(array_filter([
+            $a->is_first_time_entrant ? 'First-time entrant' : null,
+            $a->is_pwd ? 'Person with disability' : null,
+            $a->is_indigenous ? 'Indigenous group' : null,
+            $a->is_solo_parent ? 'Solo parent' : null,
+            $a->is_k12_graduate ? 'K-12 graduate' : null,
+        ]));
+
         $sections = [
             ['title' => 'Receipt', 'items' => [
                 ['Field Office', $office?->name ?? '—'],
@@ -134,10 +276,6 @@ class AppointmentController extends Controller
             ['title' => 'Appointee', 'items' => [
                 ['Name', $a->full_name],
                 ['Sex', $a->sex === 'M' ? 'Male' : 'Female'],
-                ['Person with disability', $yes($a->is_pwd)],
-                ['Member of an indigenous group', $yes($a->is_indigenous)],
-                ['Solo parent', $yes($a->is_solo_parent)],
-                ['K-12 graduate', $yes($a->is_k12_graduate)],
             ]],
             ['title' => 'Position and appointment', 'items' => [
                 ['Position title', $a->position],
@@ -145,21 +283,20 @@ class AppointmentController extends Controller
                 ['Level', $text($a->level)],
                 ['Employment status', $a->employment_status],
                 ['Nature of appointment', $a->nature_of_appointment],
-                ['Publication', $publication],
-                ['Mode of publication', $text($a->publication_mode)],
+                // Publication and eligibility exist on the Plantilla sheet only, so a Casual or Contractual appointment has neither.
+                ...($casual ? [] : [['Publication', $publication], ['Mode of publication', $text($a->publication_mode)]]),
             ]],
-            ['title' => 'Eligibility', 'items' => [
+            ...($casual ? [] : [['title' => 'Eligibility', 'items' => [
                 ['Type of eligibility', $text($a->eligibility_type)],
                 ...($a->skoe_position ? [['SK position', $a->skoe_position]] : []),
-                ['First-time entrant', $yes($a->is_first_time_entrant)],
                 ['Date of exam', $text($a->eligibility_exam_date)],
                 ['Place of exam', $text($a->eligibility_exam_place)],
                 ['Date of issuance', $date($a->eligibility_issued_date)],
                 ['Place of issuance', $text($a->eligibility_issued_place)],
                 ['Validity of license', $date($a->eligibility_validity)],
-            ]],
+            ]]]),
             ['title' => 'CSC action', 'items' => [
-                ['Action', $a->csc_action ?? 'Awaiting action'],
+                ['Action', $a->csc_action ?? 'Pending'],
                 ['Action officer', $text($a->action_officer)],
                 ['Date of action', $date($a->action_date)],
                 ['Date of release', $date($a->release_date)],
@@ -180,9 +317,14 @@ class AppointmentController extends Controller
             'routing_note' => $office
                 ? "{$office->name} ({$office->head_type->label()}): appointments of SG {$office->head_type->psedThreshold()} and above are processed by PSED, the rest by the Field Office."
                 : null,
+            'glance' => $glance,
+            'timeline' => $timeline,
+            'callout' => $callout,
+            'flags' => $flags,
+            // `empty` fields are folded away in the dialog, so what is shown is what was recorded.
             'sections' => collect($sections)->map(fn ($s) => [
                 'title' => $s['title'],
-                'items' => collect($s['items'])->map(fn ($i) => ['label' => $i[0], 'value' => $i[1]])->all(),
+                'items' => collect($s['items'])->map(fn ($i) => ['label' => $i[0], 'value' => $i[1], 'empty' => $i[1] === '—'])->all(),
             ])->all(),
             'can_update' => $request->user()->can('update', $a),
             // PSED administrators can open the record's history in the audit trail.

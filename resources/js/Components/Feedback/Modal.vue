@@ -36,6 +36,14 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    /**
+     * False while something must not be interrupted (an import being saved): Esc, the backdrop and
+     * the close button do nothing, and the close button is hidden.
+     */
+    dismissible: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 const emit = defineEmits(['close']);
@@ -52,7 +60,9 @@ const headerClasses = {
     danger: 'bg-danger text-white',
 };
 
-const close = () => emit('close');
+const close = () => {
+    if (props.dismissible) emit('close');
+};
 
 const onKeydown = (event) => {
     if (event.key === 'Escape') {
@@ -107,6 +117,7 @@ onBeforeUnmount(() => {
                         {{ title }}
                     </h2>
                     <button
+                        v-if="dismissible"
                         type="button"
                         class="shrink-0 rounded-md p-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
                         :class="tone === 'neutral' ? 'text-text-muted hover:bg-surface-muted hover:text-text' : 'text-white/85 hover:bg-white/15 hover:text-white'"

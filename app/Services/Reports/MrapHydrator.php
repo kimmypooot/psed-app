@@ -27,8 +27,15 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
  * selected one, because the template's earlier months hold one office's
  * figures and the carried-over balances would otherwise be wrong.
  *
- * G.1-G.4 (appointments unacted as of 31 Dec 2025) are not in the data this
- * system holds, so they stay as the template has them.
+ * The balance carried in from the year before (A's January value, and section G: appointments
+ *  unacted as of 31 December) is the office's opening balance, set by PSED (OpeningBalances), or
+ *  worked out from the appointments when PSED set none.
+ *
+ *   A   beginning balance, January only            -> row 6
+ *   G.1 unacted as of 31 December                  -> row 28
+ *   G.2 of those, still unacted at the month start -> row 29
+ *   G.3 acted from them during the month           -> row 30
+ *   G.4 still unacted at the month end             -> row 31
  */
 class MrapHydrator implements ReportHydrator
 {
@@ -37,37 +44,47 @@ class MrapHydrator implements ReportHydrator
         $sheet = $spreadsheet->getSheet(0);
 
         $months = $context->isConsolidated() ? range(1, $context->month) : [$context->month];
+
+        // Every figure of every month in one pass over the appointments (see MonthlyFigures).
+        $figures = MonthlyFigures::compute($context, $months);
+
         foreach ($months as $month) {
-            $this->fillMonth($sheet, $context->forMonth($month));
+            $this->fillMonth($sheet, $month, $figures[$month]);
         }
 
         $this->header($sheet, $context);
     }
 
-    private function fillMonth(Worksheet $sheet, ReportContext $context): void
+    /** @param  array<string, int>  $f  the month's MonthlyFigures */
+    private function fillMonth(Worksheet $sheet, int $month, array $f): void
     {
-        $col = chr(ord('E') + $context->month - 1);
-
-        $received = $context->appointments()->receivedBetween($context->start, $context->end);
-        $receivedCount = (clone $received)->count();
-
-        $withEligibility = (clone $received)
-            ->whereNotNull('eligibility_type')->where('eligibility_type', '!=', 'N/A')->count();
-
-        $beforeMonth = fn () => $context->appointments()->where('date_received', '<', $context->start->toDateString());
+        $col = chr(ord('E') + $month - 1);
 
         $values = [
-            7 => $receivedCount,
-            9 => $withEligibility,
-            10 => $receivedCount - $withEligibility,
-            11 => $beforeMonth()->unactedAsOf($context->start->subDay())->count(),
-            12 => $receivedCount,
-            15 => $context->appointments()->actedBetween($context->start, $context->end)->count(),
-            19 => $beforeMonth()->unactedAsOf($context->end)->count(),
-            20 => (clone $received)->unactedAsOf($context->end)->count(),
-            25 => $context->appointments()->actedBetween($context->start, $context->end)
-                ->whereIn('csc_action', config('psed.rejected_actions'))->count(),
+            7 => $f['received'],
+            9 => $f['eligible'],
+            10 => $f['received'] - $f['eligible'],
+            11 => $f['opening_unacted'],
+            12 => $f['received'],
+            15 => $f['acted'],
+            19 => $f['closing_unacted_prior'],
+            20 => $f['closing_unacted_received'],
+            25 => $f['rejected'],
+            // G: the backlog carried in from the year before, worked down by what is acted from it.
+            28 => $f['balance'],
+            29 => $f['backlog_start'],
+            30 => $f['backlog_acted'],
         ];
+
+        // A. The year's Beginning Balance is January's alone: the other months continue from the ending balance.
+        if ($month === 1) {
+            $values[6] = $f['balance'];
+        }
+
+        // G.4 is a formula in the template's first column; keep it where it is one.
+        if (! $sheet->getCell($col.'31')->isFormula()) {
+            $values[31] = $f['backlog_end'];
+        }
 
         foreach ($values as $row => $value) {
             $sheet->setCellValue($col.$row, $value);
@@ -80,6 +97,15 @@ class MrapHydrator implements ReportHydrator
 
         $sheet->setCellValue('A2', 'for the month of '.strtoupper($context->monthName()).' '.$context->year);
         $sheet->setCellValue('A3', 'Name of Field Office:  '.strtoupper($context->officeName()).($office?->location ? ', '.$office->location : ''));
+
+        // Section G is about the year before the one reported (the template names the year it was made for).
+        $carriedFrom = $context->year - 1;
+        foreach (['B27', 'D28'] as $cell) {
+            $text = $sheet->getCell($cell)->getValue();
+            if (is_string($text)) {
+                $sheet->setCellValue($cell, preg_replace(['/December 31, \d{4}/', '/February, \d{4}/'], ["December 31, {$carriedFrom}", "February, {$context->year}"], $text));
+            }
+        }
 
         $date = 'Date: '.$context->nextMonthStart()->format('d F Y');
 

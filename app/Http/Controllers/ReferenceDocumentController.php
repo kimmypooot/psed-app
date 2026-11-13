@@ -58,10 +58,30 @@ class ReferenceDocumentController extends Controller
                 'type' => $filters['type'] ?? '',
                 'year' => $filters['year'] ?? '',
             ],
-            'types' => collect(ReferenceType::cases())->map(fn (ReferenceType $t) => ['value' => $t->value, 'label' => $t->label()])->all(),
+            // The categories, each with how many documents it holds (the whole library, not what the search leaves).
+            // The old generic ones are offered only while documents are still filed under them.
+            'types' => $this->categories($counts = ReferenceDocument::query()->selectRaw('type, COUNT(*) AS n')->groupBy('type')->pluck('n', 'type')->all()),
+            'total' => array_sum($counts),
             'years' => ReferenceDocument::whereNotNull('issued_on')->pluck('issued_on')->map->year->unique()->sortDesc()->values(),
             'canManage' => $request->user()->can('manage-references'),
         ]);
+    }
+
+    /**
+     * @param  array<string, int|string>  $counts  documents per type value
+     * @return list<array{value: string, label: string, description: string, tone: string, count: int}>
+     */
+    private function categories(array $counts): array
+    {
+        return collect(ReferenceType::cases())
+            ->reject(fn (ReferenceType $t) => $t->isLegacy() && (int) ($counts[$t->value] ?? 0) === 0)
+            ->map(fn (ReferenceType $t) => [
+                'value' => $t->value,
+                'label' => $t->label(),
+                'description' => $t->description(),
+                'tone' => $t->tone(),
+                'count' => (int) ($counts[$t->value] ?? 0),
+            ])->values()->all();
     }
 
     public function store(ReferenceDocumentRequest $request): RedirectResponse

@@ -69,8 +69,35 @@ The office codes are the IMIS unit codes and are also the codes printed on the r
 3. `.env`: `IMIS_SSO_URL`, `IMIS_PORTAL_URL`, `APP_URL` (the audience is derived from it).
 
 Then set each office's head (Director II, OIC SG 22, default) and the report signatories under **Settings > Field Offices**. Changing the head re-routes that office's existing appointments.
+## A Director II who heads more than one Field Office
+
+IMIS lists the other offices a person heads (`headed_offices`, by office code) at each sign-in; CARES keeps them in `field_office_user` and rewrites them every time. Such a person chooses which office they are working as after signing in, and can switch from the header (`ApplyActiveOffice`). The choice is checked against that list on every request and is never saved to the account.
+
+## Opening balances (the MRAP's Beginning Balance and section G)
+
+The balance a Field Office carries into a year is its appointments still unacted on 31 December of the year before. A system that starts in 2027 holds nothing earlier, so PSED enters each office's balance under **Settings > Opening Balances**. Where PSED sets none, the reports use what the appointments in the system show (`OpeningBalances`), which is what later years use.
+
+## Production checklist
+
+- `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`. Sessions are encrypted and the cookie is secure-only; HTTPS is forced and the security headers (including a strict content-security policy) are on in production.
+- Sessions, cache and queue off the database that holds the appointments (Redis if the host has it). Set `TRUSTED_PROXIES` when behind a proxy.
+- Rotate `IMIS_API_TOKEN` if it was ever shared; keep `.env` out of the repository.
+- `php artisan migrate --force`, then `php artisan optimize` and `npm run build`.
+- `composer audit` and `npm audit`; a limited-privilege database user; backups that have been restored at least once.
+- Remove demo data: `php artisan appointments:seed-demo 0 --fresh` (demo rows are the ones received by "Demo Encoder").
+
+## Stress testing
+
+Never against real data. Create a throwaway database whose name contains `stress`, then:
+
+```
+DB_DATABASE=psed_stress php artisan migrate
+DB_DATABASE=psed_stress php artisan stress:seed 100000
+DB_DATABASE=psed_stress php tools/stress/bench.php          # page timings, EXPLAIN of the hot queries
+tools/stress/run-load.sh 25                                  # 25 simulated users at once
+```
+
 ## Not built yet
 
-- IMIS single sign-out (`/sso/logout`), as in `new-imis/docs/sso-logout.md`.
-- The MRAP's G.1 to G.4 rows (unacted as of 31 Dec 2025) are left as the office keeps them in the template.
 - Import of the legacy appointments (`../psed/appt_fo.php`).
+- The Integrated CSE Applicants and Absorption Database Summary (K-12, JOCOSC6, SKOE and special groups per agency).

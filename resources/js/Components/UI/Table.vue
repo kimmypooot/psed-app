@@ -62,7 +62,8 @@ defineProps({
 }
 
 .table-styled :deep(tbody tr:hover) {
-    background-color: color-mix(in srgb, var(--color-info-bg) 55%, transparent);
+    /* A row may set its own hover colour (--row-hover), as the appointments list does by status. */
+    background-color: var(--row-hover, color-mix(in srgb, var(--color-info-bg) 55%, transparent));
 }
 
 .table-styled :deep(tbody tr:last-child) {

@@ -8,6 +8,7 @@ export const toneClasses = {
     warning: 'bg-warning-bg text-warning ring-1 ring-inset ring-warning-border',
     danger: 'bg-danger-bg text-danger ring-1 ring-inset ring-danger-border',
     info: 'bg-info-bg text-info ring-1 ring-inset ring-info-border',
+    primary: 'bg-primary/10 text-primary ring-1 ring-inset ring-primary/25',
     neutral: 'bg-surface-muted text-text-muted ring-1 ring-inset ring-border',
 };
 

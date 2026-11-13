@@ -11,6 +11,8 @@ use App\Http\Controllers\Auth\SessionHeartbeatController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FieldOfficeController;
 use App\Http\Controllers\LookupController;
+use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\OpeningBalanceController;
 use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ReferenceDocumentController;
 use App\Http\Controllers\ReportController;
@@ -41,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
     Route::post('/logout', [SessionController::class, 'destroy'])->name('logout');
 
+    // For someone who works as more than one Field Office (a Director II): choose, then switch from the header.
+    Route::get('/office', [OfficeController::class, 'choose'])->name('office.choose');
+    Route::post('/office', [OfficeController::class, 'switch'])->middleware('throttle:30,1')->name('office.switch');
+
     // Idle-timeout keep-alive; account-level like logout.
     Route::post('/session/heartbeat', SessionHeartbeatController::class)->middleware('throttle:30,1')->name('session.heartbeat');
 
@@ -51,6 +57,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/appointments/import/template', [AppointmentImportController::class, 'template'])->middleware('throttle:20,1')->name('appointments.import.template');
     Route::post('/appointments/import/preview', [AppointmentImportController::class, 'preview'])->middleware('throttle:20,1')->name('appointments.import.preview');
     Route::post('/appointments/import', [AppointmentImportController::class, 'commit'])->middleware('throttle:20,1')->name('appointments.import');
+    // The same list, one MOA sheet at a time: Plantilla, and Casual / Contractual (the "CasualCon" sheet).
+    Route::get('/appointments/plantilla', [AppointmentController::class, 'index'])->defaults('type', 'plantilla')->name('appointments.plantilla');
+    Route::get('/appointments/casual-contractual', [AppointmentController::class, 'index'])->defaults('type', 'casual-contractual')->name('appointments.casual');
     Route::resource('appointments', AppointmentController::class)->except('show');
 
     // Qualification Standards: the standards, issuances, memorandums and policies that guide processing. Everyone reads;
@@ -90,6 +99,10 @@ Route::middleware('auth')->group(function () {
     Route::put('/settings/report-deadlines', [ReportDeadlineController::class, 'update'])->name('settings.deadlines.update');
     Route::post('/settings/report-deadlines/months', [ReportDeadlineController::class, 'store'])->name('settings.deadlines.store');
     Route::delete('/settings/report-deadlines/months/{deadline}', [ReportDeadlineController::class, 'destroy'])->whereNumber('deadline')->name('settings.deadlines.destroy');
+
+    // The balance each Field Office carries into a year, which feeds the MRAP: PSED administrators only.
+    Route::get('/settings/opening-balances', [OpeningBalanceController::class, 'index'])->name('settings.opening-balances');
+    Route::put('/settings/opening-balances', [OpeningBalanceController::class, 'update'])->middleware('throttle:30,1')->name('settings.opening-balances.update');
 
     // The position titles suggested on the appointment form: PSED administrators only.
     Route::get('/settings/positions', [PositionController::class, 'index'])->name('settings.positions');

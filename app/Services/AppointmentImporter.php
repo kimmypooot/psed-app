@@ -136,7 +136,10 @@ class AppointmentImporter
             }
         });
 
-        return $analysis['counts'] + ['imported' => count($ready)];
+        // How many landed in each list: by employment status, as the lists and the MOA report decide it.
+        $casual = count(array_filter($ready, fn (array $r) => in_array($r['data']['employment_status'] ?? null, config('psed.casual_contractual_statuses'), true)));
+
+        return $analysis['counts'] + ['imported' => count($ready), 'imported_casual' => $casual, 'imported_plantilla' => count($ready) - $casual];
     }
 
     /** A blank copy of the MOA form to fill in: the CSC's template with its sample rows cleared. */
@@ -314,9 +317,14 @@ class AppointmentImporter
             $warnings[] = 'SKOE: the SK position (SK Official, SK Secretary or SK Treasurer) is not in the MOA form. Open the appointment after the import to choose it.';
         }
 
-        // The CasualCon sheet is for Casual and Contractual appointments only.
-        if ($sheet === 'CasualCon' && ! in_array($data['employment_status'], config('psed.casual_contractual_statuses'), true) && $data['employment_status'] !== null) {
-            $warnings[] = "Listed on the CasualCon sheet but the status is \"{$data['employment_status']}\", so the MOA report will list it under Plantilla.";
+        // An appointment is Plantilla or Casual / Contractual by its employment status, and the CasualCon sheet is for
+        // Casual and Contractual only. A row on the other sheet is kept, but it will be listed (here and in the MOA report) by its status.
+        $casualStatus = in_array($data['employment_status'], config('psed.casual_contractual_statuses'), true);
+        if ($sheet === 'CasualCon' && ! $casualStatus && $data['employment_status'] !== null) {
+            $warnings[] = "Listed on the CasualCon sheet but the status is \"{$data['employment_status']}\", so the MOA report will list it under Plantilla, and so will the Plantilla list.";
+        }
+        if ($sheet === 'Plantilla' && $casualStatus) {
+            $warnings[] = "Listed on the Plantilla sheet but the status is \"{$data['employment_status']}\", so the MOA report will list it under CasualCon, and so will the Casual / Contractual list.";
         }
 
         // --- who records the decision: the office the flow chart routes the appointment to ----------

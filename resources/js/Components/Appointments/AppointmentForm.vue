@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Link, router, useForm, usePage } from '@inertiajs/vue3';
 import Button from '@/Components/UI/Button.vue';
 import Card from '@/Components/UI/Card.vue';
@@ -195,6 +195,50 @@ const recordTimeReceived = () => {
 };
 
 const cancel = () => router.visit('/appointments');
+
+// A long form needs a way around it: the sections, the one in view, and which hold a field that needs attention.
+const sections = [
+    { id: 'sec-receipt', label: 'Receipt' },
+    { id: 'sec-appointee', label: 'Appointee' },
+    { id: 'sec-position', label: 'Position' },
+    { id: 'sec-publication', label: 'Publication' },
+    { id: 'sec-eligibility', label: 'Eligibility' },
+    { id: 'sec-action', label: 'CSC action' },
+];
+const sectionOfField = (name) => {
+    if (/^(csc_action|action_|release_date|pending_reason|disapproval_reason)/.test(name)) return 'sec-action';
+    if (/^publication_/.test(name)) return 'sec-publication';
+    if (/^(eligibility_|is_first_time|skoe_)/.test(name)) return 'sec-eligibility';
+    if (/^(position|salary_grade|level|employment_status|nature_of_appointment)/.test(name)) return 'sec-position';
+    if (/^(last_name|first_name|middle_name|name_extension|sex|is_pwd|is_indigenous|is_solo|is_k12)/.test(name)) return 'sec-appointee';
+
+    return 'sec-receipt';
+};
+const errorCount = computed(() => Object.keys(form.errors).length);
+const sectionErrors = computed(() => {
+    const counts = {};
+    for (const field of Object.keys(form.errors)) counts[sectionOfField(field)] = (counts[sectionOfField(field)] ?? 0) + 1;
+
+    return counts;
+});
+
+const activeSection = ref(sections[0].id);
+let observer = null;
+onMounted(() => {
+    // The section crossing the upper part of the screen is the one being worked on.
+    observer = new IntersectionObserver(
+        (entries) => entries.forEach((entry) => entry.isIntersecting && (activeSection.value = entry.target.id)),
+        { rootMargin: '-25% 0px -65% 0px' },
+    );
+    sections.forEach((s) => document.getElementById(s.id) && observer.observe(document.getElementById(s.id)));
+});
+onBeforeUnmount(() => observer?.disconnect());
+
+const goTo = (id) => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    activeSection.value = id;
+};
 </script>
 
 <template>
@@ -225,7 +269,24 @@ const cancel = () => router.visit('/appointments');
             </div>
         </div>
 
-        <Card title="Receipt" icon="download" description="From the documents submitted by the client agency.">
+        <!-- Where you are in the form, and a way to jump; a dot marks a section with something to fix -->
+        <nav class="sticky top-16 z-20 -mx-1 flex gap-1 overflow-x-auto rounded-lg border border-border bg-surface p-1.5 shadow-xs" aria-label="Sections of the form">
+            <button
+                v-for="s in sections"
+                :key="s.id"
+                type="button"
+                class="flex shrink-0 items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+                :class="activeSection === s.id ? 'bg-primary text-white' : 'text-text-muted hover:bg-surface-muted hover:text-text'"
+                :aria-current="activeSection === s.id ? 'true' : undefined"
+                @click="goTo(s.id)"
+            >
+                {{ s.label }}
+                <span v-if="sectionErrors[s.id]" class="size-2 rounded-full bg-danger ring-2 ring-surface" aria-hidden="true" />
+                <span v-if="sectionErrors[s.id]" class="sr-only">{{ sectionErrors[s.id] }} to fix</span>
+            </button>
+        </nav>
+
+        <Card id="sec-receipt" class="scroll-mt-32" title="Receipt" icon="download" description="From the documents submitted by the client agency.">
             <div class="grid gap-4 md:grid-cols-12">
                 <div v-if="user.sees_all_offices" class="md:col-span-4">
                     <Combobox id="field_office_id" v-model="form.field_office_id" label="Field Office" required :options="officeOptions" :allow-custom="false" placeholder="Search for an office" :invalid="!!form.errors.field_office_id" />
@@ -271,7 +332,7 @@ const cancel = () => router.visit('/appointments');
             </div>
         </Card>
 
-        <Card title="Appointee" icon="user">
+        <Card id="sec-appointee" class="scroll-mt-32" title="Appointee" icon="user">
             <div class="grid gap-4 md:grid-cols-4">
                 <div>
                     <TextInput id="last_name" v-model="form.last_name" label="Last name" required :invalid="!!form.errors.last_name" />
@@ -301,7 +362,7 @@ const cancel = () => router.visit('/appointments');
             </div>
         </Card>
 
-        <Card title="Position and appointment" icon="clipboard">
+        <Card id="sec-position" class="scroll-mt-32" title="Position and appointment" icon="clipboard">
             <div class="grid gap-4 md:grid-cols-3">
                 <div class="md:col-span-2">
                     <Combobox id="position" v-model="form.position" label="Position title" required :options="positionSuggestions" :loading="positionLoading" placeholder="Search for a position title" :invalid="!!form.errors.position" />
@@ -322,7 +383,7 @@ const cancel = () => router.visit('/appointments');
             </div>
         </Card>
 
-        <Card title="Publication" icon="megaphone" description="Of the vacant position (not required for Casual and Contractual).">
+        <Card id="sec-publication" class="scroll-mt-32" title="Publication" icon="megaphone" description="Of the vacant position (not required for Casual and Contractual).">
             <div class="grid gap-4 md:grid-cols-3">
                 <div>
                     <TextInput id="publication_start" v-model="form.publication_start" type="date" label="Published from" />
@@ -338,7 +399,7 @@ const cancel = () => router.visit('/appointments');
             </div>
         </Card>
 
-        <Card title="Eligibility" icon="shield">
+        <Card id="sec-eligibility" class="scroll-mt-32" title="Eligibility" icon="shield">
             <div class="grid gap-4 md:grid-cols-3">
                 <div class="md:col-span-2">
                     <Combobox id="eligibility_type" v-model="form.eligibility_type" label="Type of eligibility" :options="options.eligibility_type" placeholder="Search for a type of eligibility" :invalid="!!form.errors.eligibility_type" />
@@ -376,7 +437,7 @@ const cancel = () => router.visit('/appointments');
             </div>
         </Card>
 
-        <Card title="CSC action" icon="checkCircle" :description="actionOpen ? 'Recorded by the office that processes this appointment.' : null">
+        <Card id="sec-action" class="scroll-mt-32" title="CSC action" icon="checkCircle" :description="actionOpen ? 'Recorded by the office that processes this appointment.' : null">
             <Alert v-if="!actionOpen" tone="info">
                 This appointment is processed by PSED, so the CSC action is recorded there. You can still encode and correct its details.
             </Alert>
@@ -409,9 +470,25 @@ const cancel = () => router.visit('/appointments');
             </fieldset>
         </Card>
 
-        <div class="flex flex-wrap items-center justify-end gap-3">
-            <Button variant="secondary" @click="cancel">Cancel</Button>
-            <Button type="submit" variant="success" :loading="form.processing">{{ editing ? 'Save changes' : 'Encode appointment' }}</Button>
+        <!-- Always in reach, and says who will process this -->
+        <div class="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3 shadow-lg">
+            <p class="flex items-center gap-2 text-sm" role="status">
+                <template v-if="errorCount">
+                    <Icon name="exclamation" size="sm" class="text-danger" />
+                    <span class="font-medium text-danger">{{ errorCount }} field{{ errorCount === 1 ? '' : 's' }} need{{ errorCount === 1 ? 's' : '' }} attention</span>
+                </template>
+                <template v-else-if="toPsed === null">
+                    <span class="text-text-muted">Choose the office and salary grade to see who processes this.</span>
+                </template>
+                <template v-else>
+                    <Icon :name="toPsed ? 'building' : 'clipboard'" size="sm" class="text-primary" />
+                    <span>Processed by <strong>{{ toPsed ? 'PSED' : 'the Field Office' }}</strong></span>
+                </template>
+            </p>
+            <div class="flex items-center gap-3">
+                <Button variant="secondary" @click="cancel">Cancel</Button>
+                <Button type="submit" variant="success" :loading="form.processing">{{ editing ? 'Save changes' : 'Encode appointment' }}</Button>
+            </div>
         </div>
     </form>
 </template>

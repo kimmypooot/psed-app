@@ -38,5 +38,8 @@ class AppointmentRouter
                     "CASE WHEN salary_grade >= {$threshold} THEN 'psed' ELSE 'field_office' END"
                 ),
             ]);
+
+        // A bulk update fires no model events: tell the cached dashboard figures themselves.
+        Appointment::bumpStatsVersion();
     }
 }

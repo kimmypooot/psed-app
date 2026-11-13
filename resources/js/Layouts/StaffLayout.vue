@@ -4,6 +4,7 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import Icon from '../Components/UI/Icon.vue';
 import SidebarNav from '../Components/Navigation/SidebarNav.vue';
 import UserMenu from '../Components/Navigation/UserMenu.vue';
+import OfficeSwitcher from '../Components/Navigation/OfficeSwitcher.vue';
 import AppFooter from '../Components/Navigation/AppFooter.vue';
 import ModuleSearch from '../Components/Navigation/ModuleSearch.vue';
 import AboutDialog from '../Components/Navigation/AboutDialog.vue';
@@ -155,6 +156,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div class="ml-auto flex items-center gap-1">
+                <OfficeSwitcher />
                 <UserMenu v-if="page.props.auth.user" :user="page.props.auth.user" @about="aboutOpen = true" />
             </div>
         </header>

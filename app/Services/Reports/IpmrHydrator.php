@@ -31,27 +31,29 @@ class IpmrHydrator implements ReportHydrator
         $sheet = $spreadsheet->getSheetByName('IPMR 2026') ?? $spreadsheet->getSheet(0);
 
         $months = $context->isConsolidated() ? range(1, $context->month) : [$context->month];
+
+        // Every figure of every month in one pass over the appointments (see MonthlyFigures).
+        $figures = MonthlyFigures::compute($context, $months);
+
         foreach ($months as $month) {
-            $this->fillMonth($sheet, $context->forMonth($month));
+            $this->fillMonth($sheet, $month, $figures[$month]);
         }
 
         $sheet->setCellValue('A2', 'Accomplishment Report for '.$context->monthName().' '.$context->year);
         $sheet->setCellValue('A3', 'Office: '.strtoupper($context->officeName()));
     }
 
-    private function fillMonth(Worksheet $sheet, ReportContext $context): void
+    /** @param  array<string, int>  $f  the month's MonthlyFigures */
+    private function fillMonth(Worksheet $sheet, int $month, array $f): void
     {
-        $col = self::MONTH_COLUMNS[$context->month];
-
-        $firstTime = $context->appointments()->firstTimeApprovedBetween($context->start, $context->end);
-        $acted = fn () => $context->appointments()->actedBetween($context->start, $context->end);
+        $col = self::MONTH_COLUMNS[$month];
 
         $values = [
-            27 => (clone $firstTime)->where('sex', 'M')->count(),
-            28 => (clone $firstTime)->where('sex', 'F')->count(),
-            33 => $context->appointments()->receivedBetween($context->start, $context->end)->count(),
-            37 => $acted()->where('date_received', '>=', $context->yearStart->toDateString())->count(),
-            43 => $acted()->where('date_received', '<', $context->yearStart->toDateString())->count(),
+            27 => $f['first_time_male'],
+            28 => $f['first_time_female'],
+            33 => $f['received'],
+            37 => $f['acted_this_year'],
+            43 => $f['acted_prior_years'],
         ];
 
         foreach ($values as $row => $value) {

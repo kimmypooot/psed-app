@@ -1,11 +1,14 @@
 <?php
 
+use App\Http\Middleware\ApplyActiveOffice;
 use App\Http\Middleware\EnforceSessionLimits;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -18,8 +21,18 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
             EnforceSessionLimits::class,
+            ApplyActiveOffice::class,
+            SecurityHeaders::class,
             HandleInertiaRequests::class,
         ]);
+
+        // Before route binding, so a record is looked up as the office chosen.
+        $middleware->prependToPriorityList(before: SubstituteBindings::class, prepend: ApplyActiveOffice::class);
+
+        // Behind a load balancer / reverse proxy in production: trust only the proxies listed.
+        if ($proxies = env('TRUSTED_PROXIES')) {
+            $middleware->trustProxies(at: $proxies === '*' ? '*' : explode(',', $proxies));
+        }
 
         $middleware->redirectGuestsTo('/login');
         $middleware->redirectUsersTo('/dashboard');

@@ -27,14 +27,16 @@ class AuditTrailController extends Controller
         'agency' => ['Agencies', 'agency.'],
         'position' => ['Positions', 'position.'],
         'deadline' => ['Report deadlines', 'deadline.'],
+        'opening_balance' => ['Opening balances', 'opening_balance.'],
         'report' => ['Reports', 'report.'],
-        'auth' => ['Sign-ins and sign-outs', ['login', 'logout', 'session.limit_reached']],
+        'auth' => ['Sign-ins and sign-outs', ['login', 'logout', 'session.limit_reached', 'office.switched']],
     ];
 
     private const ACTIONS = [
         'login' => ['Signed in', 'neutral'],
         'logout' => ['Signed out', 'neutral'],
         'session.limit_reached' => ['Session ended (time limit)', 'warning'],
+        'office.switched' => ['Switched the Field Office they work as', 'info'],
         'appointment.create' => ['Encoded an appointment', 'success'],
         'appointment.update' => ['Changed an appointment', 'info'],
         'appointment.delete' => ['Deleted an appointment', 'danger'],
@@ -52,9 +54,12 @@ class AuditTrailController extends Controller
         'report.accept' => ['Accepted a submitted report', 'success'],
         'report.return' => ['Returned a submitted report', 'warning'],
         'report.download_all' => ['Downloaded the submitted reports of a month', 'neutral'],
+        'report.download' => ['Downloaded a submitted report', 'neutral'],
         'deadline.update' => ['Changed the usual report deadlines', 'info'],
         'deadline.set' => ['Set a month\'s report deadline', 'info'],
         'deadline.remove' => ['Removed a month\'s report deadline', 'neutral'],
+        'opening_balance.set' => ['Set an opening balance', 'info'],
+        'opening_balance.clear' => ['Cleared an opening balance', 'neutral'],
         'report.generate' => ['Generated a report', 'neutral'],
     ];
 

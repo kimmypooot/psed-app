@@ -17,6 +17,17 @@
     --animate-rise: rise 0.3s ease-out both;
     --animate-shimmer: shimmer 1.5s ease-in-out infinite;
     --animate-breathe: breathe 3.2s ease-in-out infinite;
+    --animate-indeterminate: indeterminate 1.4s ease-in-out infinite;
+
+    /* A bar 40% of the track wide that sweeps across it: work is happening, with no percentage to claim. */
+    @keyframes indeterminate {
+        0% {
+            transform: translateX(-100%);
+        }
+        100% {
+            transform: translateX(250%);
+        }
+    }
 
     /* A slow, soft glow that swells and settles. */
     @keyframes breathe {

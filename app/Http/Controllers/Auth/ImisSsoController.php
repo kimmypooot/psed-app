@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\ApplyActiveOffice;
 use App\Models\AuditLog;
 use App\Models\FieldOffice;
 use App\Models\User;
@@ -122,14 +123,42 @@ class ImisSsoController extends Controller
             'last_login_at' => now(),
         ])->save();
 
+        // A Director II may head more than one Field Office: IMIS lists them, and what it says today replaces what it said last time.
+        $user->extraOffices()->sync($this->headedOfficeIds($imis, $role, $user->field_office_id));
+
         AuditLog::record('login', $user, after: ['method' => 'imis', 'role' => $role->value], user: $user, request: $request);
 
         Auth::login($user);
         $request->session()->regenerate();
+        // A new sign-in asks again which office to work as.
+        $request->session()->forget(ApplyActiveOffice::SESSION_KEY);
         app(SessionLimits::class)->start($request->session());
         $this->rememberImisSession($imis, $request->session()->getId());
 
         return redirect()->intended(route('dashboard'));
+    }
+
+    /**
+     * The CARES Field Offices of the other offices IMIS says the person heads today
+     * (`headed_offices`: a Director II, officer-in-charge or concurrent head), apart from
+     * their own. Field Office employees only; an office CARES does not know is skipped.
+     *
+     * @param  array<string, mixed>  $imis
+     * @return list<int>
+     */
+    private function headedOfficeIds(array $imis, UserRole $role, ?int $homeId): array
+    {
+        if ($role !== UserRole::FieldOffice || ! is_array($imis['headed_offices'] ?? null)) {
+            return [];
+        }
+
+        $codes = collect($imis['headed_offices'])
+            ->map(fn ($office) => is_array($office) && is_string($office['code'] ?? null) ? trim($office['code']) : null)
+            ->filter()->unique()->values();
+
+        return FieldOffice::whereIn('imis_code', $codes)
+            ->when($homeId, fn ($q) => $q->whereKeyNot($homeId))
+            ->pluck('id')->map(fn ($id) => (int) $id)->all();
     }
 
     /**

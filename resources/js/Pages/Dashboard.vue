@@ -15,6 +15,10 @@ const props = defineProps({
     stats: { type: Object, required: true },
     trend: { type: Array, required: true },
     recent: { type: Array, required: true },
+    /** The oldest appointments still waiting for action. */
+    waiting: { type: Array, default: () => [] },
+    /** This month, as the appointments list's date filter takes it. */
+    month: { type: Object, required: true },
     rule: { type: Object, default: null },
     offices: { type: Array, default: () => [] },
 });
@@ -29,13 +33,16 @@ const refresh = () => {
 };
 
 const maxBar = computed(() => Math.max(1, ...props.trend.flatMap((m) => [m.received, m.acted])));
+// A figure that leads to the list behind it.
+const cardLink = 'group block h-full rounded-lg transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring';
+const queueLink = 'block rounded-md p-1.5 -m-1.5 transition-colors hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring';
 const queueTotal = computed(() => Math.max(1, props.stats.field_office_queue + props.stats.psed_queue));
 
 const formatDate = (value) =>
     value ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : '';
 
 const actionTone = (action) =>
-    ({ Approved: 'success', Validated: 'success', Disapproved: 'danger', Invalidated: 'danger', Pending: 'warning' })[action] ?? 'neutral';
+    ({ Approved: 'success', Validated: 'success', Disapproved: 'danger', Invalidated: 'danger', Pending: 'info' })[action ?? 'Pending'] ?? 'neutral';
 </script>
 
 <template>
@@ -57,9 +64,20 @@ const actionTone = (action) =>
         <p class="mb-3 text-xs font-semibold tracking-wide text-text-muted uppercase">{{ period }}</p>
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Received" :value="stats.received" icon="download" tone="primary">appointments received this month</MetricCard>
+            <!-- The two figures the list can show exactly are links to it -->
+            <Link :href="`/appointments?date_from=${month.from}&date_to=${month.to}`" :class="cardLink">
+                <MetricCard label="Received" :value="stats.received" icon="download" tone="primary">
+                    appointments received this month
+                    <span class="mt-1 flex items-center gap-1 font-medium text-primary">See them<Icon name="arrowRight" size="sm" /></span>
+                </MetricCard>
+            </Link>
             <MetricCard label="Acted upon" :value="stats.acted" icon="checkCircle" tone="success">approved, validated, disapproved or invalidated</MetricCard>
-            <MetricCard label="Backlog" :value="stats.backlog" icon="clock" :tone="stats.backlog ? 'warning' : 'success'">still waiting for action</MetricCard>
+            <Link href="/appointments?status=pending" :class="cardLink">
+                <MetricCard label="Backlog" :value="stats.backlog" icon="clock" :tone="stats.backlog ? 'warning' : 'success'">
+                    still waiting for action
+                    <span class="mt-1 flex items-center gap-1 font-medium text-primary">See what is pending<Icon name="arrowRight" size="sm" /></span>
+                </MetricCard>
+            </Link>
             <MetricCard label="First-time entrants" :value="stats.first_time" icon="userPlus" tone="info">absorbed this month</MetricCard>
         </div>
 
@@ -82,26 +100,64 @@ const actionTone = (action) =>
 
             <Card title="Who has the backlog" icon="building">
                 <div class="space-y-4">
-                    <div>
+                    <Link href="/appointments?status=pending&processor=field_office" :class="queueLink">
                         <div class="flex items-baseline justify-between text-sm">
                             <span class="font-medium text-text">Field Office</span>
                             <span class="text-text-muted">{{ stats.field_office_queue }} pending</span>
                         </div>
                         <div class="mt-1 h-2 overflow-hidden rounded-full bg-surface-muted"><div class="h-full rounded-full bg-csc-blue-light" :style="{ width: `${(stats.field_office_queue / queueTotal) * 100}%` }" /></div>
-                    </div>
-                    <div>
+                    </Link>
+                    <Link href="/appointments?status=pending&processor=psed" :class="queueLink">
                         <div class="flex items-baseline justify-between text-sm">
                             <span class="font-medium text-text">PSED</span>
                             <span class="text-text-muted">{{ stats.psed_queue }} pending</span>
                         </div>
                         <div class="mt-1 h-2 overflow-hidden rounded-full bg-surface-muted"><div class="h-full rounded-full bg-chart-2" :style="{ width: `${(stats.psed_queue / queueTotal) * 100}%` }" /></div>
-                    </div>
+                    </Link>
                 </div>
                 <p v-if="rule" class="mt-5 rounded-md bg-info-bg p-3 text-xs leading-relaxed text-info">
                     <strong>{{ rule.office }}</strong> ({{ rule.head_label }}): appointments of SG {{ rule.psed_from_sg }} and above are processed by PSED, the rest by the Field Office.
                 </p>
             </Card>
         </div>
+
+        <!-- The next thing to pick up -->
+        <Card title="Waiting longest" icon="clock" description="The oldest appointments still waiting for action." class="mt-4">
+            <template #actions>
+                <Link href="/appointments?status=pending&sort=date_received&dir=asc" class="text-sm font-medium text-primary hover:underline">See all pending</Link>
+            </template>
+
+            <p v-if="!waiting.length" class="flex items-center justify-center gap-2 py-6 text-sm text-success">
+                <Icon name="checkCircle" size="sm" />Nothing is waiting. Every appointment has been acted upon.
+            </p>
+
+            <Table v-else>
+                <thead>
+                    <tr>
+                        <th scope="col">Appointee</th>
+                        <th scope="col">Position</th>
+                        <th scope="col">Received</th>
+                        <th scope="col" class="text-right">Waiting</th>
+                        <th scope="col">Processed by</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="a in waiting" :key="a.id">
+                        <td>
+                            <Link :href="`/appointments/${a.id}/edit`" class="font-medium text-primary hover:underline">{{ a.full_name }}</Link>
+                            <div class="text-xs text-text-muted">{{ a.agency }}<span v-if="offices.length"> · {{ a.office }}</span></div>
+                        </td>
+                        <td class="text-xs">{{ a.position }} <span class="text-text-muted">(SG {{ a.salary_grade }})</span></td>
+                        <td class="text-xs whitespace-nowrap">{{ formatDate(a.date_received) }}</td>
+                        <td class="text-right whitespace-nowrap">
+                            <template v-if="a.days === 0">Today</template>
+                            <template v-else><span class="font-semibold tabular-nums">{{ a.days }}</span> <span class="text-xs text-text-muted">{{ a.days === 1 ? 'day' : 'days' }}</span></template>
+                        </td>
+                        <td><Badge :tone="a.processed_by === 'psed' ? 'info' : 'neutral'">{{ a.processed_by_label }}</Badge></td>
+                    </tr>
+                </tbody>
+            </Table>
+        </Card>
 
         <Card v-if="offices.length" title="Field Offices" icon="building" description="This month, and what is waiting to be processed." class="mt-4">
             <Table>
@@ -154,7 +210,7 @@ const actionTone = (action) =>
                         <td>{{ a.position }} <span class="text-text-muted">(SG {{ a.salary_grade }})</span></td>
                         <td class="whitespace-nowrap">{{ formatDate(a.date_received) }}</td>
                         <td><Badge :tone="a.processed_by === 'psed' ? 'info' : 'neutral'">{{ a.processed_by_label }}</Badge></td>
-                        <td><Badge v-if="a.csc_action" :tone="actionTone(a.csc_action)">{{ a.csc_action }}</Badge><span v-else class="text-text-muted">—</span></td>
+                        <td><Badge :tone="actionTone(a.csc_action)">{{ a.csc_action ?? 'Pending' }}</Badge></td>
                     </tr>
                 </tbody>
             </Table>

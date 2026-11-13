@@ -13,7 +13,11 @@ class Navigation
         $items = [
             ['label' => 'Dashboard', 'href' => '/dashboard', 'icon' => 'home'],
             ['heading' => 'Appointments'],
-            ['label' => 'Appointments', 'href' => '/appointments', 'icon' => 'clipboard'],
+            // The MOA's two sheets, the same appointments one kind at a time. `fixed`: always shown open, nothing to toggle.
+            ['group' => 'Appointments', 'icon' => 'clipboard', 'fixed' => true, 'items' => [
+                ['label' => 'Plantilla', 'href' => '/appointments/plantilla'],
+                ['label' => 'Casual / Contractual', 'href' => '/appointments/casual-contractual'],
+            ]],
             ['label' => 'Encode Appointment', 'href' => '/appointments/create', 'icon' => 'plus'],
             ['heading' => 'Reports'],
             ['label' => 'Generate Reports', 'href' => '/reports', 'icon' => 'documentText'],
@@ -30,6 +34,7 @@ class Navigation
             $items[] = ['heading' => 'Settings'];
             $items[] = ['label' => 'Field Offices', 'href' => '/settings/field-offices', 'icon' => 'building'];
             $items[] = ['label' => 'Agencies', 'href' => '/settings/agencies', 'icon' => 'archive'];
+            $items[] = ['label' => 'Opening Balances', 'href' => '/settings/opening-balances', 'icon' => 'chartBar'];
             $items[] = ['label' => 'Report Deadlines', 'href' => '/settings/report-deadlines', 'icon' => 'calendar'];
             $items[] = ['label' => 'Positions', 'href' => '/settings/positions', 'icon' => 'clipboard'];
             $items[] = ['label' => 'Audit Trail', 'href' => '/audit-trail', 'icon' => 'activity'];

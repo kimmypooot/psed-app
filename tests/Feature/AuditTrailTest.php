@@ -54,7 +54,7 @@ class AuditTrailTest extends TestCase
         $this->get('/audit-trail')->assertRedirect('/login');
         $this->actingAs($this->fo)->get('/audit-trail')->assertForbidden();
         $this->actingAs($this->admin)->get('/audit-trail')->assertOk()
-            ->assertInertia(fn (Assert $page) => $page->component('AuditTrail/Index')->has('groups', 8));
+            ->assertInertia(fn (Assert $page) => $page->component('AuditTrail/Index')->has('groups', 9));
     }
 
     public function test_the_sidebar_offers_it_to_administrators_only(): void

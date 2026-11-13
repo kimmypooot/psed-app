@@ -31,13 +31,18 @@ import { confirm } from '@/Composables/useDialog';
 const props = defineProps({
     documents: { type: Object, required: true },
     filters: { type: Object, required: true },
+    /** The categories, each with { value, label, description, tone, count }. */
     types: { type: Array, required: true },
+    /** Every document in the library, whatever the filters leave. */
+    total: { type: Number, default: 0 },
     years: { type: Array, required: true },
     canManage: { type: Boolean, required: true },
 });
 
 const filters = useListFilters('/qualification-standards', { ...props.filters });
-const typeOptions = computed(() => props.types);
+// The category bar: everything, then each category with how many documents it holds.
+const categories = computed(() => [{ value: '', label: 'All', description: null, count: props.total }, ...props.types]);
+const currentCategory = computed(() => props.types.find((t) => t.value === filters.type) ?? null);
 const yearOptions = computed(() => props.years.map((y) => ({ value: String(y), label: String(y) })));
 const hasFilters = computed(() => ['search', 'type', 'year'].some((key) => filters[key] !== '' && filters[key] != null));
 const reset = () => {
@@ -71,6 +76,8 @@ const openForm = (document = null) => {
     editing.value = document;
     form.reset();
     form.clearErrors();
+    // Adding while a category is showing files the document under it.
+    if (!document && filters.type && props.types.some((t) => t.value === filters.type)) form.type = filters.type;
     if (document) {
         form.title = document.title;
         form.type = document.type;
@@ -114,21 +121,36 @@ const remove = async (document) => {
     <StaffLayout>
         <PageHeader
             title="Qualification Standards"
-            description="The qualification standards, issuances, memorandums and policies that guide the processing of appointments."
+            description="The policies, laws, rules and regulations on appointments: the 2025 ORA-OHRA, the CSC, CHED and DBM memorandums, and the qualification standards."
         >
             <template v-if="canManage" #actions>
                 <Button variant="success" @click="openForm()"><Icon name="plus" size="sm" />Add document</Button>
             </template>
         </PageHeader>
 
+        <!-- The categories, and how much each holds -->
+        <nav class="mb-4 flex flex-wrap gap-2" aria-label="Categories">
+            <button
+                v-for="c in categories"
+                :key="c.value"
+                type="button"
+                class="flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+                :class="(filters.type || '') === c.value ? 'border-primary bg-primary text-white' : ['border-border bg-surface text-text hover:border-primary/40 hover:text-primary', c.count === 0 ? 'opacity-70' : '']"
+                :aria-pressed="(filters.type || '') === c.value"
+                :title="c.description ?? undefined"
+                @click="filters.type = c.value"
+            >
+                {{ c.label }}
+                <span class="text-xs tabular-nums" :class="(filters.type || '') === c.value ? 'text-white/80' : 'text-text-muted'">{{ c.count }}</span>
+            </button>
+        </nav>
+
+        <p v-if="currentCategory" class="mb-3 max-w-3xl text-sm text-text-muted">{{ currentCategory.description }}</p>
+
         <Card class="mb-4">
             <div class="flex flex-wrap items-end gap-3">
-                <SearchBox v-model="filters.search" placeholder="Search title, reference number or summary" label="Search qualification standards" />
+                <SearchBox v-model="filters.search" placeholder="Search title, reference number or summary" label="Search documents" />
                 <div class="w-48">
-                    <label for="f-type" class="block text-sm font-medium text-text">Type</label>
-                    <Combobox :allow-custom="false" id="f-type" v-model="filters.type" :options="typeOptions" placeholder="All types" class="mt-1" />
-                </div>
-                <div class="w-36">
                     <label for="f-year" class="block text-sm font-medium text-text">Year issued</label>
                     <Combobox :allow-custom="false" id="f-year" v-model="filters.year" :options="yearOptions" placeholder="Any year" class="mt-1" />
                 </div>
@@ -141,9 +163,13 @@ const remove = async (document) => {
         <div v-if="!documents.data.length" class="rounded-lg border border-border bg-surface">
             <EmptyState
                 icon="archive"
-                :title="hasFilters ? 'No documents match these filters' : 'No documents yet'"
-                :description="hasFilters ? 'Try a different word or clear a filter.' : canManage ? 'Add the first qualification standard, issuance, memorandum or policy that guides appointment processing.' : 'PSED has not added any documents yet.'"
-            />
+                :title="hasFilters ? (currentCategory && !filters.search && !filters.year ? `No ${currentCategory.label} documents yet` : 'No documents match these filters') : 'No documents yet'"
+                :description="hasFilters ? (currentCategory && !filters.search && !filters.year ? 'Nothing has been filed under this category yet.' : 'Try a different word or clear a filter.') : canManage ? 'Add the first document: the 2025 ORA-OHRA, a CSC, CHED or DBM memorandum, a law, or a qualification standard.' : 'PSED has not added any documents yet.'"
+            >
+                <template v-if="canManage && currentCategory" #action>
+                    <Button variant="success" @click="openForm()"><Icon name="plus" size="sm" />Add to {{ currentCategory.label }}</Button>
+                </template>
+            </EmptyState>
         </div>
 
         <ul v-else class="space-y-3">
@@ -224,7 +250,7 @@ const remove = async (document) => {
                 </div>
 
                 <div class="grid gap-4 sm:grid-cols-3">
-                    <FormGroup id="ref-type" label="Type" required :error="form.errors.type">
+                    <FormGroup id="ref-type" label="Category" required :helper-text="types.find((t) => t.value === form.type)?.description" :error="form.errors.type">
                         <Combobox :allow-custom="false" id="ref-type" v-model="form.type" :options="types" required />
                     </FormGroup>
                     <div>

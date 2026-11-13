@@ -583,4 +583,66 @@ class AppointmentImportTest extends TestCase
 
         $this->actingAs($this->fo)->post('/appointments/import', ['token' => $json['token']]);
         $this->assertSame('Ryan Jose M. Estoque', Appointment::sole()->action_officer);
-    }}
+    }
+
+    // ------------------------------------------------------- the import dialog (JSON)
+
+    public function test_the_dialog_gets_the_outcome_as_json_instead_of_a_redirect(): void
+    {
+        $file = $this->form([$this->row(['I' => 'Good']), $this->row(['I' => 'Baddate', 'D' => 'someday'])]);
+        $token = $this->preview($this->fo, $file)->assertOk()->json('token');
+
+        $this->actingAs($this->fo)->postJson('/appointments/import', ['token' => $token])
+            ->assertOk()
+            ->assertJson(['file_name' => 'moa.xlsx', 'rows' => 2, 'imported' => 1, 'invalid' => 1, 'duplicates' => 0])
+            ->assertJsonPath('message', fn ($m) => str_contains($m, 'Imported 1 appointment from moa.xlsx'));
+
+        $this->assertSame(1, Appointment::count());
+    }
+
+    public function test_an_expired_check_tells_the_dialog_to_start_again(): void
+    {
+        $this->actingAs($this->fo)->postJson('/appointments/import', ['token' => (string) \Illuminate\Support\Str::uuid()])
+            ->assertStatus(410)
+            ->assertJsonPath('message', 'This import has expired. Please choose the file again.');
+
+        $this->assertSame(0, Appointment::count());
+    }
+
+    public function test_a_token_belonging_to_someone_else_is_refused_in_json_too(): void
+    {
+        $token = $this->preview($this->fo, $this->form([$this->row()]))->assertOk()->json('token');
+        $stranger = User::factory()->fieldOffice(FieldOffice::factory()->create()->id)->create();
+
+        $this->actingAs($stranger)->postJson('/appointments/import', ['token' => $token])->assertStatus(410);
+        $this->assertSame(0, Appointment::count());
+    }
+
+    // ----------------------------------------------- the two sheets and the two lists
+
+    public function test_the_dialog_is_told_how_many_went_to_each_list_and_a_mismatched_sheet_is_pointed_out(): void
+    {
+        $casual = fn (array $o) => $o + [
+            'A' => 'Field Office-Eastern Samar', 'B' => 'DepEd Eastern Samar Division', 'C' => 'National Government Agency', 'D' => '10/01/2026', 'E' => '08:00:00',
+            'F' => 'Ryan', 'G' => '09/15/2026', 'H' => '09/15/2026', 'I' => 'Casualone', 'J' => 'Dan', 'K' => 'N/A', 'L' => 'Opriasa', 'M' => 'X',
+            'O' => 'Administrative Aide I', 'P' => 1, 'Q' => '1st', 'R' => 'Casual', 'S' => 'Original',
+            'T' => 'No', 'U' => 'No', 'V' => 'Yes', 'W' => 'Validated', 'X' => 'Ryan', 'Y' => '10/07/2026', 'Z' => '10/08/2026', 'AA' => 'N/A', 'AB' => 'N/A',
+        ];
+
+        $json = $this->preview($this->fo, $this->form(
+            [$this->row(['I' => 'Plantillaone']), $this->row(['I' => 'Plantillacasual', 'R' => 'Contractual'])],   // the second is a casual status on the Plantilla sheet
+            [$casual([])],
+        ))->assertOk()->json();
+
+        $this->assertSame(2, $json['counts']['plantilla']);
+        $this->assertSame(1, $json['counts']['casual']);
+        $this->assertStringContainsString('will list it under CasualCon', collect($json['problems'])->firstWhere('name', 'Plantillacasual, Ana')['messages'][0]);
+
+        // Listed by status, as the MOA report does: 1 Plantilla, 2 Casual / Contractual.
+        $this->actingAs($this->fo)->postJson('/appointments/import', ['token' => $json['token']])
+            ->assertOk()->assertJson(['imported' => 3, 'imported_plantilla' => 1, 'imported_casual' => 2]);
+
+        $this->assertSame(1, Appointment::plantilla()->count());
+        $this->assertSame(2, Appointment::casualContractual()->count());
+    }
+}

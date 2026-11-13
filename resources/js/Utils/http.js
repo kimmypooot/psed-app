@@ -31,6 +31,40 @@ export const request = async (method, url, body = undefined, headers = {}) => {
 };
 
 /**
+ * Like request(), but reports how much of the upload has been sent, which fetch cannot do:
+ * `onUploadProgress(percent)` is called with 0-100 as the body goes up. Answers { ok, status, data }.
+ */
+export const requestWithProgress = (method, url, body, onUploadProgress) =>
+    new Promise((resolve) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.withCredentials = true;
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.setRequestHeader('X-XSRF-TOKEN', xsrfToken());
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) onUploadProgress?.(Math.round((event.loaded / event.total) * 100));
+        };
+
+        const done = () => {
+            let data = null;
+
+            try {
+                data = JSON.parse(xhr.responseText);
+            } catch {
+                // Not JSON (a gateway error page, say); the status still tells the story.
+            }
+
+            resolve({ ok: xhr.status >= 200 && xhr.status < 300, status: xhr.status, data });
+        };
+
+        xhr.onload = done;
+        xhr.onerror = () => resolve({ ok: false, status: 0, data: { message: 'The connection was lost. Check your network and try again.' } });
+        xhr.send(body);
+    });
+
+/**
  * Sends `payload` as JSON.
  */
 export const requestJson = (method, url, payload) => request(method, url, JSON.stringify(payload), { 'Content-Type': 'application/json' });

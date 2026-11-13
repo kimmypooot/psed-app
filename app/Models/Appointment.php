@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 class Appointment extends Model
 {
@@ -38,8 +39,23 @@ class Appointment extends Model
         ];
     }
 
+    /** Bumped on every change so cached dashboard figures are never stale after an edit. */
+    public static function statsVersion(): int
+    {
+        return (int) Cache::get('appointments.stats_version', 1);
+    }
+
+    public static function bumpStatsVersion(): void
+    {
+        Cache::add('appointments.stats_version', 1);
+        Cache::increment('appointments.stats_version');
+    }
+
     protected static function booted(): void
     {
+        static::saved(fn () => self::bumpStatsVersion());
+        static::deleted(fn () => self::bumpStatsVersion());
+
         // Step 4 of the flow chart: decide who processes it, every time it is saved.
         static::saving(function (self $appointment) {
             // The SK position belongs to the SKOE alone; any other eligibility leaves none behind.
@@ -106,14 +122,56 @@ class Appointment extends Model
             return $query;
         }
 
+        // MySQL / MariaDB: every word must start a word in the name, agency or position, via the FULLTEXT
+        // index (see the appointments_search_ft migration), so searching stays fast at any size.
+        // Words under 3 characters are below the index's minimum, so they use the LIKE scan below.
+        $words = preg_split('/[^\p{L}\p{N}]+/u', $term, -1, PREG_SPLIT_NO_EMPTY);
+
+        if (in_array($query->getConnection()->getDriverName(), ['mysql', 'mariadb'], true)
+            && $words !== [] && min(array_map('mb_strlen', $words)) >= 3) {
+            return $query->whereRaw(
+                'MATCH(last_name, first_name, middle_name, agency, position) AGAINST (? IN BOOLEAN MODE)',
+                [implode(' ', array_map(fn (string $w) => '+'.$w.'*', $words))],
+            );
+        }
+
         return $query->where(function (Builder $q) use ($term) {
-            $like = '%'.$term.'%';
+            // % and _ typed by a user are characters to find, not wildcards.
+            $like = '%'.addcslashes($term, '\\%_').'%';
             $q->where('last_name', 'like', $like)
                 ->orWhere('first_name', 'like', $like)
                 ->orWhere('middle_name', 'like', $like)
                 ->orWhere('agency', 'like', $like)
                 ->orWhere('position', 'like', $like);
         });
+    }
+
+    // The MOA has two sheets, and an appointment belongs to one of them by its employment status: Casual and
+    // Contractual go to "CasualCon", everything else to "Plantilla" (see config psed.casual_contractual_statuses).
+    // The lists, the MOA report and the import all use this one rule, so they never disagree.
+
+    public const TYPE_PLANTILLA = 'plantilla';
+
+    public const TYPE_CASUAL = 'casual-contractual';
+
+    public function scopePlantilla(Builder $query): Builder
+    {
+        return $query->whereNotIn('employment_status', config('psed.casual_contractual_statuses'));
+    }
+
+    public function scopeCasualContractual(Builder $query): Builder
+    {
+        return $query->whereIn('employment_status', config('psed.casual_contractual_statuses'));
+    }
+
+    /** One MOA sheet's appointments by its URL name (null: both). */
+    public function scopeOfType(Builder $query, ?string $type): Builder
+    {
+        return match ($type) {
+            self::TYPE_PLANTILLA => $query->plantilla(),
+            self::TYPE_CASUAL => $query->casualContractual(),
+            default => $query,
+        };
     }
 
     public function scopeReceivedBetween(Builder $query, CarbonInterface $from, CarbonInterface $to): Builder

@@ -135,9 +135,64 @@ class AppointmentsTest extends TestCase
         $this->assertSame('Oct 5, 2026', $items['Date received']);
         $this->assertSame('SG 27', $items['Salary grade']);
         $this->assertSame('RA 1080 (Teacher)', $items['Type of eligibility']);
-        $this->assertSame('Awaiting action', $items['Action']);
+        $this->assertSame('Pending', $items['Action']);
     }
 
+
+    // ------------------------------------------------- the dialog's summary, timeline and marks
+
+    public function test_the_dialog_summarises_where_the_appointment_stands(): void
+    {
+        $this->travelTo('2026-11-13 10:00:00');
+        $waiting = Appointment::factory()->create(['field_office_id' => $this->office->id, 'date_received' => '2026-10-02', 'csc_action' => null, 'pending_reason' => 'Awaiting the CAR', 'is_pwd' => true, 'is_first_time_entrant' => true]);
+        $approved = Appointment::factory()->create(['field_office_id' => $this->office->id, 'date_received' => '2026-10-01', 'csc_action' => 'Approved', 'action_date' => '2026-10-06', 'release_date' => '2026-10-08']);
+        $rejected = Appointment::factory()->create(['field_office_id' => $this->office->id, 'date_received' => '2026-10-01', 'csc_action' => 'Disapproved', 'action_date' => '2026-10-03', 'disapproval_reason' => 'No eligibility']);
+
+        $get = fn (Appointment $a) => $this->actingAs($this->fo)->getJson("/appointments/{$a->id}/details")->assertOk()->json();
+
+        $json = $get($waiting);
+        $this->assertEquals(['status' => 'Pending', 'waited' => 'Waiting 42 days', 'overdue_days' => 42, 'kind' => 'Plantilla'], \Illuminate\Support\Arr::only($json['glance'], ['status', 'waited', 'overdue_days', 'kind']));
+        $this->assertSame(['Received', 'Action', 'Released'], array_column($json['timeline'], 'label'));
+        $this->assertSame(['done', 'waiting', 'waiting'], array_column($json['timeline'], 'state'));
+        $this->assertSame(['tone' => 'info', 'title' => 'Why it is pending', 'text' => 'Awaiting the CAR'], $json['callout']);
+        $this->assertEqualsCanonicalizing(['First-time entrant', 'Person with disability'], $json['flags']);
+
+        $json = $get($approved);
+        $this->assertSame('Acted in 5 days', $json['glance']['waited']);
+        $this->assertNull($json['glance']['overdue_days']);
+        $this->assertSame(['Received', 'Approved', 'Released'], array_column($json['timeline'], 'label'));
+        $this->assertSame(['done', 'done', 'done'], array_column($json['timeline'], 'state'));
+        $this->assertNull($json['callout']);
+
+        $json = $get($rejected);
+        $this->assertSame(['Received', 'Disapproved'], array_column($json['timeline'], 'label'), 'a disapproved appointment is not released');
+        $this->assertSame('danger', $json['callout']['tone']);
+        $this->assertSame('No eligibility', $json['callout']['text']);
+    }
+
+    public function test_a_casual_appointment_has_no_publication_or_eligibility_in_the_dialog(): void
+    {
+        $casual = Appointment::factory()->casual()->create(['field_office_id' => $this->office->id]);
+        $plantilla = Appointment::factory()->create(['field_office_id' => $this->office->id]);
+        $get = fn (Appointment $a) => $this->actingAs($this->fo)->getJson("/appointments/{$a->id}/details")->assertOk()->json();
+
+        $json = $get($casual);
+        $this->assertSame('Casual / Contractual', $json['glance']['kind']);
+        $this->assertNotContains('Eligibility', array_column($json['sections'], 'title'));
+        $this->assertNotContains('Publication', collect($json['sections'])->flatMap(fn ($s) => $s['items'])->pluck('label')->all());
+
+        $this->assertContains('Eligibility', array_column($get($plantilla)['sections'], 'title'));
+    }
+
+    public function test_fields_nobody_filled_in_are_marked_so_the_dialog_can_fold_them_away(): void
+    {
+        $a = Appointment::factory()->create(['field_office_id' => $this->office->id, 'level' => null, 'sector' => 'National Government Agency']);
+
+        $items = collect($this->actingAs($this->fo)->getJson("/appointments/{$a->id}/details")->json('sections'))->flatMap(fn ($s) => $s['items'])->keyBy('label');
+
+        $this->assertTrue($items['Level']['empty']);
+        $this->assertFalse($items['Sector']['empty']);
+    }
     // ------------------------------------------- K-12 graduate and SK position
 
     public function test_an_appointment_can_be_marked_as_a_k12_graduate(): void
@@ -147,9 +202,7 @@ class AppointmentsTest extends TestCase
         $a = Appointment::firstOrFail();
         $this->assertTrue($a->is_k12_graduate);
         $this->assertFalse(Appointment::factory()->make()->is_k12_graduate, 'not a K-12 graduate unless marked');
-
-        $items = collect($this->actingAs($this->fo)->getJson("/appointments/{$a->id}/details")->json('sections'))->flatMap(fn ($s) => $s['items'])->pluck('value', 'label');
-        $this->assertSame('Yes', $items['K-12 graduate']);
+        $this->assertContains('K-12 graduate', $this->actingAs($this->fo)->getJson("/appointments/{$a->id}/details")->json('flags'), 'shown as a mark, only because it is true');
     }
 
     public function test_the_skoe_asks_for_the_sk_position_and_keeps_the_one_chosen(): void

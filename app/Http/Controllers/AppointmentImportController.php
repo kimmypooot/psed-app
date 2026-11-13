@@ -91,8 +91,11 @@ class AppointmentImportController extends Controller
         ]);
     }
 
-    /** Step 2: import the rows that passed. */
-    public function commit(Request $request, AppointmentImporter $importer): RedirectResponse
+    /**
+     * Step 2: import the rows that passed. The import dialog asks for JSON and shows the outcome itself;
+     * a plain form post still redirects back to the list with a message.
+     */
+    public function commit(Request $request, AppointmentImporter $importer): RedirectResponse|JsonResponse
     {
         $this->authorize('create', Appointment::class);
         $user = $request->user();
@@ -103,7 +106,7 @@ class AppointmentImportController extends Controller
 
         // Someone else's token, a used one or an old one: the file is gone or not theirs.
         if (! is_array($entry) || $entry['user'] !== $user->id || ! Storage::disk('local')->exists($entry['path'])) {
-            return redirect()->route('appointments.index')->with('error', 'This import has expired. Please choose the file again.');
+            return $this->failed($request, 'This import has expired. Please choose the file again.', 410);
         }
 
         $office = $this->officeFor($user, $entry['office']);
@@ -111,7 +114,7 @@ class AppointmentImportController extends Controller
         try {
             $result = $importer->import(Storage::disk('local')->path($entry['path']), $user, $office);
         } catch (ImportException $e) {
-            return redirect()->route('appointments.index')->with('error', $e->getMessage());
+            return $this->failed($request, $e->getMessage(), 422);
         }
 
         Storage::disk('local')->delete($entry['path']);
@@ -133,10 +136,31 @@ class AppointmentImportController extends Controller
             $message .= " {$left} row".($left === 1 ? ' was' : 's were').' left out (errors or duplicates).';
         }
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'file_name' => $entry['name'],
+                'rows' => $result['rows'],
+                'imported' => $result['imported'],
+                'imported_plantilla' => $result['imported_plantilla'],
+                'imported_casual' => $result['imported_casual'],
+                'duplicates' => $result['duplicates'],
+                'invalid' => $result['invalid'],
+                'message' => $message,
+            ]);
+        }
+
         return redirect()->route('appointments.index')->with('status', $message);
     }
 
     // ------------------------------------------------------------------ helpers
+
+    /** An import that could not go ahead: a message in the dialog for JSON, a flash on the list otherwise. */
+    private function failed(Request $request, string $message, int $status): RedirectResponse|JsonResponse
+    {
+        return $request->expectsJson()
+            ? response()->json(['message' => $message], $status)
+            : redirect()->route('appointments.index')->with('error', $message);
+    }
 
     /** Field Office staff always import into their own office; PSED picks one, or reads it per row ("file"). */
     private function officeFor(User $user, ?string $choice): ?FieldOffice
