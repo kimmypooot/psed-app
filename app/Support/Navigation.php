@@ -35,6 +35,7 @@ class Navigation
             $items[] = ['heading' => 'Settings'];
             $items[] = ['label' => 'Field Offices', 'href' => '/settings/field-offices', 'icon' => 'building'];
             $items[] = ['label' => 'Agencies', 'href' => '/settings/agencies', 'icon' => 'archive'];
+            $items[] = ['label' => 'Summary Agencies', 'href' => '/settings/summary-agencies', 'icon' => 'database'];
             $items[] = ['label' => 'Opening Balances', 'href' => '/settings/opening-balances', 'icon' => 'chartBar'];
             $items[] = ['label' => 'Report Deadlines', 'href' => '/settings/report-deadlines', 'icon' => 'calendar'];
             $items[] = ['label' => 'Positions', 'href' => '/settings/positions', 'icon' => 'clipboard'];

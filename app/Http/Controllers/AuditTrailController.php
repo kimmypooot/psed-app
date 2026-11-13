@@ -56,6 +56,8 @@ class AuditTrailController extends Controller
         'report.download_all' => ['Downloaded the submitted reports of a month', 'neutral'],
         'report.download' => ['Downloaded a submitted report', 'neutral'],
         'report.summary_database' => ['Generated the Summary Database', 'neutral'],
+        'agency.summary_map' => ['Paired an agency with a Summary Database row', 'info'],
+        'agency.summary_unmap' => ['Removed an agency\'s Summary Database pairing', 'neutral'],
         'deadline.update' => ['Changed the usual report deadlines', 'info'],
         'deadline.set' => ['Set a month\'s report deadline', 'info'],
         'deadline.remove' => ['Removed a month\'s report deadline', 'neutral'],

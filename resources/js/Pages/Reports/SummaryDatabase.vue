@@ -1,6 +1,6 @@
 <script setup>
 import { computed, reactive, ref, watch } from 'vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import StaffLayout from '@/Layouts/StaffLayout.vue';
 import PageHeader from '@/Components/UI/PageHeader.vue';
 import Card from '@/Components/UI/Card.vue';
@@ -116,7 +116,7 @@ const unmatchedOffices = computed(() => Object.entries(result.value?.unmatched ?
             </Alert>
 
             <Alert v-if="unmatchedOffices.length" tone="warning" title="Agencies that are not on the workbook's list">
-                They are counted in their Field Office's own row, with a note, so nothing is lost. Add them to the workbook's list if they should have a row of their own.
+                They are counted in their Field Office's own row, with a note, so nothing is lost. <Link href="/settings/summary-agencies" class="font-medium text-primary underline">Pair them with a row</Link>, or say they have none.
                 <ul class="mt-2 space-y-1">
                     <li v-for="[office, agencies] in unmatchedOffices" :key="office">
                         <strong>{{ office }}:</strong>

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\FieldOffice;
+use App\Models\ReferenceValue;
+use App\Models\SummaryAgencyAlias;
 use App\Services\Reports\ReportPeriod;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
@@ -179,6 +181,7 @@ class SummaryDatabase
     {
         $figures = $this->figures($period);
         $offices = FieldOffice::orderBy('id')->get();
+        $aliases = $this->aliases();
         $report = ['period' => $period->label, 'appointments' => 0, 'sheets' => [], 'unmatched' => []];
 
         $report['appointments'] = (int) DB::table('appointments')->whereIn('csc_action', config('psed.approved_actions'))
@@ -204,7 +207,11 @@ class SummaryDatabase
                 $otherAgencies = [];
 
                 foreach ($figures[$office->id] ?? [] as $agency => $metrics) {
-                    $row = $this->match($agency, $rowOf);
+                    // PSED's own pairing wins over the automatic one; "no row of its own" is a decision too.
+                    $paired = array_key_exists($agency, $aliases[$office->id] ?? []);
+                    $row = $paired
+                        ? (($aliases[$office->id][$agency] ?? null) !== null ? ($rowOf[$this->tidy($aliases[$office->id][$agency])] ?? $this->match($agency, $rowOf)) : null)
+                        : $this->match($agency, $rowOf);
 
                     foreach ($columns as $col => $metric) {
                         $value = $metrics[$metric];
@@ -240,8 +247,11 @@ class SummaryDatabase
                         'Includes appointments of agencies that are not listed on this sheet: '.collect($otherAgencies)->map(fn ($n, $a) => "{$a} ({$n})")->implode('; ')
                     );
 
+                    // An agency PSED has said has no row of its own is counted here, but is no longer flagged.
                     foreach ($otherAgencies as $agency => $n) {
-                        $report['unmatched'][$office->name][$agency] = $n;
+                        if (! array_key_exists($agency, $aliases[$office->id] ?? [])) {
+                            $report['unmatched'][$office->name][$agency] = $n;
+                        }
                     }
                 }
             }
@@ -312,8 +322,21 @@ class SummaryDatabase
             return $rowOf[$name];
         }
 
+        [$row, $score] = $this->closest($name, $rowOf);
+
+        return $score >= self::CLOSE_ENOUGH ? $row : null;
+    }
+
+    /**
+     * The row whose name is most like this (already tidied) one, and how alike (percent).
+     *
+     * @return array{0: ?int, 1: float}
+     */
+    private function closest(string $name, array $rowOf): array
+    {
         $best = null;
         $bestScore = 0.0;
+
         foreach ($rowOf as $candidate => $row) {
             similar_text($name, (string) $candidate, $score);
             if ($score > $bestScore) {
@@ -321,7 +344,69 @@ class SummaryDatabase
             }
         }
 
-        return $bestScore >= self::CLOSE_ENOUGH ? $best : null;
+        return [$best, $bestScore];
+    }
+
+    /**
+     * What PSED has paired by hand: office id => CARES agency name => the workbook's agency, or null for "no row of its own".
+     *
+     * @return array<int, array<string, ?string>>
+     */
+    private function aliases(): array
+    {
+        return SummaryAgencyAlias::all()->groupBy('field_office_id')
+            ->map(fn ($rows) => $rows->mapWithKeys(fn (SummaryAgencyAlias $a) => [$a->agency => $a->template_agency])->all())->all();
+    }
+
+    /**
+     * Every Field Office's agencies against the workbook's rows, for the screen where PSED pairs the ones that
+     * do not match: how each is matched (`auto`, `mapped`, `none` or `unmatched`), to which row, and the closest
+     * row to suggest for an unmatched one.
+     *
+     * @return list<array{id: int, name: string, rows: list<string>, agencies: list<array<string, mixed>>}>
+     */
+    public function review(): array
+    {
+        $reader = IOFactory::createReader('Xlsx');
+        $reader->setReadDataOnly(true);
+        $reader->setLoadSheetsOnly('K-12 Absorption Summary');
+        $book = $reader->load($this->templatePath());
+        $blocks = $this->blocks($book->getSheetByName('K-12 Absorption Summary'));
+        $book->disconnectWorksheets();
+
+        $aliases = $this->aliases();
+        $result = [];
+
+        foreach (FieldOffice::orderBy('name')->get() as $office) {
+            $block = collect($blocks)->first(fn (array $b) => $this->officeMatches($office->name, $b['name']));
+            if ($block === null) {
+                continue;
+            }
+
+            $rowOf = $this->rowIndex($block['agencies']);
+            $agencies = ReferenceValue::where('type', 'agency')->where('field_office_id', $office->id)->pluck('value')
+                ->merge(DB::table('appointments')->where('field_office_id', $office->id)->distinct()->pluck('agency'))
+                ->unique()->sort()->values();
+
+            $items = [];
+            foreach ($agencies as $agency) {
+                $paired = array_key_exists($agency, $aliases[$office->id] ?? []);
+                $template = $paired ? $aliases[$office->id][$agency] : null;
+                $row = $paired ? null : $this->match($agency, $rowOf);
+                [$nearRow, $score] = $paired || $row ? [null, 0.0] : $this->closest($this->tidy($agency), $rowOf);
+
+                $items[] = [
+                    'agency' => $agency,
+                    'status' => $paired ? ($template === null ? 'none' : 'mapped') : ($row ? 'auto' : 'unmatched'),
+                    'template' => $paired ? $template : ($row ? $block['agencies'][$row] : null),
+                    'suggestion' => $nearRow !== null && $score >= 60 ? $block['agencies'][$nearRow] : null,
+                ];
+            }
+
+            $result[] = ['id' => $office->id, 'name' => $office->name, 'rows' => array_values($block['agencies']), 'agencies' => $items];
+        }
+
+        return $result;
     }
 
     /** Lower case, without the bracketed part or "Province of", so the two ways of writing a name meet. */

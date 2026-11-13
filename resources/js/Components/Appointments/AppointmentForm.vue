@@ -224,20 +224,49 @@ const sectionErrors = computed(() => {
 
 const activeSection = ref(sections[0].id);
 let observer = null;
+// While a clicked tab is scrolling into view, the sections passed on the way must not take over the highlight.
+let scrollingTo = null;
+let unlockTimer = null;
+
+const unlock = () => {
+    scrollingTo = null;
+    clearTimeout(unlockTimer);
+};
+// The last sections are short, so the page may end before they cross the observed band: at the bottom, the last one is current.
+const syncAtEdges = () => {
+    if (scrollingTo) return;
+    const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
+    if (atBottom) activeSection.value = sections[sections.length - 1].id;
+};
+
 onMounted(() => {
     // The section crossing the upper part of the screen is the one being worked on.
     observer = new IntersectionObserver(
-        (entries) => entries.forEach((entry) => entry.isIntersecting && (activeSection.value = entry.target.id)),
+        (entries) => {
+            if (scrollingTo) return;
+            entries.forEach((entry) => entry.isIntersecting && (activeSection.value = entry.target.id));
+        },
         { rootMargin: '-25% 0px -65% 0px' },
     );
     sections.forEach((s) => document.getElementById(s.id) && observer.observe(document.getElementById(s.id)));
+    window.addEventListener('scroll', syncAtEdges, { passive: true });
+    window.addEventListener('scrollend', unlock);
 });
-onBeforeUnmount(() => observer?.disconnect());
+onBeforeUnmount(() => {
+    observer?.disconnect();
+    window.removeEventListener('scroll', syncAtEdges);
+    window.removeEventListener('scrollend', unlock);
+    clearTimeout(unlockTimer);
+});
 
 const goTo = (id) => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
     activeSection.value = id;
+    scrollingTo = id;
+    clearTimeout(unlockTimer);
+    // Fallback for browsers without `scrollend`.
+    unlockTimer = setTimeout(unlock, 900);
+    document.getElementById(id)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
 };
 </script>
 

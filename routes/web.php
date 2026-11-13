@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportDeadlineController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\ReportSubmissionController;
 use App\Http\Controllers\SpecialGroupReportController;
+use App\Http\Controllers\SummaryAgencyController;
 use App\Http\Controllers\SummaryDatabaseController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
@@ -109,6 +110,10 @@ Route::middleware('auth')->group(function () {
     // The balance each Field Office carries into a year, which feeds the MRAP: PSED administrators only.
     Route::get('/settings/opening-balances', [OpeningBalanceController::class, 'index'])->name('settings.opening-balances');
     Route::put('/settings/opening-balances', [OpeningBalanceController::class, 'update'])->middleware('throttle:30,1')->name('settings.opening-balances.update');
+
+    // Which row of the Summary Database workbook each agency belongs to, where the names do not match by themselves: PSED administrators only.
+    Route::get('/settings/summary-agencies', [SummaryAgencyController::class, 'index'])->name('settings.summary-agencies');
+    Route::put('/settings/summary-agencies', [SummaryAgencyController::class, 'update'])->middleware('throttle:30,1')->name('settings.summary-agencies.update');
 
     // The position titles suggested on the appointment form: PSED administrators only.
     Route::get('/settings/positions', [PositionController::class, 'index'])->name('settings.positions');
