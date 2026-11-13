@@ -19,10 +19,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // First, so the headers are on every response, including the error pages that cut the request short
+        // (a record not found, a session that ran out, a form that failed its token).
+        $middleware->web(prepend: [SecurityHeaders::class]);
+
         $middleware->web(append: [
             EnforceSessionLimits::class,
             ApplyActiveOffice::class,
-            SecurityHeaders::class,
             HandleInertiaRequests::class,
         ]);
 

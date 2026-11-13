@@ -79,6 +79,8 @@ The balance a Field Office carries into a year is its appointments still unacted
 
 ## Production checklist
 
+Run `php artisan cares:preflight` on the server that will serve CARES. It checks what can be checked below (debug off, https, secure and encrypted sessions, sessions and cache away from the appointments database, a non-root database user with a password, IMIS over https with a long token, no demo data left, no pending migrations, the Excel templates in place, assets built, config cached) and exits with an error if anything fails; `--strict` makes warnings fail too.
+
 - `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`. Sessions are encrypted and the cookie is secure-only; HTTPS is forced and the security headers (including a strict content-security policy) are on in production.
 - Sessions, cache and queue off the database that holds the appointments (Redis if the host has it). Set `TRUSTED_PROXIES` when behind a proxy.
 - Rotate `IMIS_API_TOKEN` if it was ever shared; keep `.env` out of the repository.
