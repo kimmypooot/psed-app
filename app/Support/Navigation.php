@@ -24,6 +24,7 @@ class Navigation
             $user->seesAllOffices()
                 ? ['label' => 'Report Submissions', 'href' => '/reports/submissions', 'icon' => 'archive']
                 : ['label' => 'Submit Reports', 'href' => '/reports/submit', 'icon' => 'upload'],
+            ...($user->isAdmin() ? [['label' => 'Summary Database', 'href' => '/reports/summary-database', 'icon' => 'database']] : []),
             ['heading' => 'Guide'],
             ['label' => 'Qualification Standards', 'href' => '/qualification-standards', 'icon' => 'archive'],
         ];

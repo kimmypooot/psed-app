@@ -97,7 +97,12 @@ DB_DATABASE=psed_stress php tools/stress/bench.php          # page timings, EXPL
 tools/stress/run-load.sh 25                                  # 25 simulated users at once
 ```
 
+## Summary Database
+
+**Reports > Summary Database** (PSED administrators) fills the CSC's *Integrated CSE Applicants and Absorption Database Summary* workbook (K-12, JOCOSC6, SKOE and special groups, per Field Office and agency) from the appointments approved in a year, quarter, month or range of dates. Place the blank workbook in `storage/app/templates` (`Integrated CSE*Summary*.xlsx`).
+
+"Absorbed" is an approved or validated appointment whose eligibility is used for the first time (as in the Absorption Report); "regular plantilla" is Permanent status. Agency names are matched to the workbook's rows after tidying ("Province of" and bracketed parts dropped); one that matches no row is counted in its office's own row, with a note. CARES cannot know who applied for or was granted an eligibility, the Category III / IV of a position, or Job Order and Contract of Service, so those cells (and the SKOE position columns, which the template adds up to the grantees) are left for PSED to type, and the template works out the rates.
+
 ## Not built yet
 
 - Import of the legacy appointments (`../psed/appt_fo.php`).
-- The Integrated CSE Applicants and Absorption Database Summary (K-12, JOCOSC6, SKOE and special groups per agency).

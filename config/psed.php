@@ -56,6 +56,9 @@ return [
         'positions' => ['SK Official', 'SK Secretary', 'SK Treasurer'],
     ],
 
+    // The workbook PSED prepares from the appointments (SummaryDatabase), found in templates_path.
+    'summary_database_template' => 'Integrated CSE*Summary*.xlsx',
+
     'regional_office' => 'VIII',
 
     // IMIS sends each person's unit at sign-in. Employees of this unit are CARES administrators;

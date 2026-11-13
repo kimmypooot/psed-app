@@ -55,6 +55,7 @@ class AuditTrailController extends Controller
         'report.return' => ['Returned a submitted report', 'warning'],
         'report.download_all' => ['Downloaded the submitted reports of a month', 'neutral'],
         'report.download' => ['Downloaded a submitted report', 'neutral'],
+        'report.summary_database' => ['Generated the Summary Database', 'neutral'],
         'deadline.update' => ['Changed the usual report deadlines', 'info'],
         'deadline.set' => ['Set a month\'s report deadline', 'info'],
         'deadline.remove' => ['Removed a month\'s report deadline', 'neutral'],
@@ -152,9 +153,10 @@ class AuditTrailController extends Controller
         }
 
         if ($log->action === 'report.generate') {
-            $month = isset($data['month']) ? date('F', mktime(0, 0, 0, (int) $data['month'], 1)) : '';
+            $month = isset($data['month']) ? date('F', mktime(0, 0, 0, (int) $data['month'], 1)).' '.($data['year'] ?? '') : '';
 
-            return trim(strtoupper((string) ($data['type'] ?? 'Report')).' · '.$month.' '.($data['year'] ?? '').' · '.($data['office'] ?? ''), ' ·');
+            // A quarter, a year or a range of dates says so; a month is named as before.
+            return trim(strtoupper((string) ($data['type'] ?? 'Report')).' · '.(($data['kind'] ?? 'month') === 'month' ? $month : ($data['period'] ?? $month)).' · '.($data['office'] ?? ''), ' ·');
         }
 
         if (str_starts_with($log->action, 'position.') || $log->action === 'agency.rename') {

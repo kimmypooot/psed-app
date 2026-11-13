@@ -29,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
         // the settings that drive routing are for PSED administrators only.
         Gate::define('manage-offices', fn (User $user) => $user->isAdmin());
 
+        // The Integrated CSE Applicants and Absorption Database Summary covers the whole region: PSED administrators only.
+        Gate::define('view-summary-database', fn (User $user) => $user->isAdmin());
+
         // The PWD / indigenous / solo parent counts cover every Field Office: PSED administrators only.
         Gate::define('view-special-group-report', fn (User $user) => $user->isAdmin());
 

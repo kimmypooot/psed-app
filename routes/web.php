@@ -20,6 +20,7 @@ use App\Http\Controllers\ReportDeadlineController;
 use App\Http\Controllers\ReportReviewController;
 use App\Http\Controllers\ReportSubmissionController;
 use App\Http\Controllers\SpecialGroupReportController;
+use App\Http\Controllers\SummaryDatabaseController;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Support\Facades\Route;
 
@@ -84,6 +85,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/submissions/{submission}/file', [ReportSubmissionController::class, 'file'])->whereNumber('submission')->name('reports.submissions.file');
     Route::post('/reports/submissions/{submission}/accept', [ReportReviewController::class, 'accept'])->whereNumber('submission')->name('reports.submissions.accept');
     Route::post('/reports/submissions/{submission}/return', [ReportReviewController::class, 'return'])->whereNumber('submission')->name('reports.submissions.return');
+
+    // The Integrated CSE Applicants and Absorption Database Summary, for any period: PSED administrators only.
+    Route::get('/reports/summary-database', [SummaryDatabaseController::class, 'index'])->name('reports.summary-database');
+    Route::get('/reports/summary-database/check', [SummaryDatabaseController::class, 'check'])->middleware('throttle:20,1')->name('reports.summary-database.check');
+    Route::get('/reports/summary-database/download', [SummaryDatabaseController::class, 'download'])->middleware('throttle:10,1')->name('reports.summary-database.download');
 
     // How many appointments were for PWDs, indigenous group members and solo parents, by period: PSED administrators only.
     Route::get('/statistics/special-groups', [SpecialGroupReportController::class, 'index'])->name('statistics.special-groups');
