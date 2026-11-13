@@ -46,13 +46,14 @@ onMounted(() => {
 });
 onBeforeUnmount(() => listeners.forEach((stop) => stop()));
 
-// The left edge of a row has the colour of what was done, as the badge does (written out so Tailwind finds each class).
+// The left edge of a row, and the colour it takes under the pointer, are those of what was done, as the badge is
+// (written out in full so Tailwind finds each class).
 const rails = {
-    success: 'shadow-[inset_3px_0_0_var(--color-success)]',
-    info: 'shadow-[inset_3px_0_0_var(--color-info)]',
-    warning: 'shadow-[inset_3px_0_0_var(--color-warning)]',
-    danger: 'shadow-[inset_3px_0_0_var(--color-danger)]',
-    neutral: 'shadow-[inset_3px_0_0_var(--color-border-strong)]',
+    success: 'shadow-[inset_3px_0_0_var(--color-success)] [--row-hover:var(--color-success-bg)]',
+    info: 'shadow-[inset_3px_0_0_var(--color-info)] [--row-hover:var(--color-info-bg)]',
+    warning: 'shadow-[inset_3px_0_0_var(--color-warning)] [--row-hover:var(--color-warning-bg)]',
+    danger: 'shadow-[inset_3px_0_0_var(--color-danger)] [--row-hover:var(--color-danger-bg)]',
+    neutral: 'shadow-[inset_3px_0_0_var(--color-border-strong)] [--row-hover:var(--color-surface-muted)]',
 };
 
 const viewing = ref(null);
