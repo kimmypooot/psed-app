@@ -190,6 +190,58 @@ const chooseAnother = () => {
     fileKey.value++;
 };
 
+// --- The review table: every row of the file, filtered and paged here (the file is capped at 2,000 rows) ---
+const PAGE_SIZE = 50;
+const filter = ref('all');
+const search = ref('');
+const page = ref(1);
+
+// "#" counts only the rows that will be imported, so the last number is how many will be saved.
+const numbered = computed(() => {
+    let n = 0;
+
+    return (result.value?.rows ?? []).map((r) => ({ ...r, no: r.will_import ? ++n : null }));
+});
+const filters = computed(() => [
+    { id: 'all', label: 'All', count: numbered.value.length },
+    { id: 'import', label: 'Will be imported', count: numbered.value.filter((r) => r.will_import).length },
+    { id: 'left', label: 'Left out', count: numbered.value.filter((r) => !r.will_import).length },
+    { id: 'notes', label: 'With notes', count: numbered.value.filter((r) => r.notes.length).length },
+]);
+const filtered = computed(() => {
+    const q = search.value.trim().toLowerCase();
+
+    return numbered.value.filter((r) => {
+        if (filter.value === 'import' && !r.will_import) return false;
+        if (filter.value === 'left' && r.will_import) return false;
+        if (filter.value === 'notes' && !r.notes.length) return false;
+
+        return !q || [r.name, r.agency, r.position, r.office].some((v) => String(v ?? '').toLowerCase().includes(q));
+    });
+});
+const pageCount = computed(() => Math.max(1, Math.ceil(filtered.value.length / PAGE_SIZE)));
+const pageRows = computed(() => filtered.value.slice((page.value - 1) * PAGE_SIZE, page.value * PAGE_SIZE));
+watch([filter, search], () => (page.value = 1));
+watch(result, () => {
+    filter.value = 'all';
+    search.value = '';
+    page.value = 1;
+});
+const statusTone = { ready: 'success', warning: 'warning', duplicate: 'warning', error: 'danger' };
+const statusLabel = { ready: 'Ready', warning: 'Imported with a note', duplicate: 'Duplicate', error: 'Error' };
+// Status and Sheet / row are one toggle away; the row's left edge and hover colour say the same thing meanwhile.
+// (Written out in full so Tailwind finds each class.)
+const showStatus = ref(false);
+const colCount = computed(() => (showStatus.value ? 13 : 11));
+const rowRail = {
+    ready: 'shadow-[inset_3px_0_0_var(--color-success)] [--row-hover:var(--color-success-bg)]',
+    warning: 'shadow-[inset_3px_0_0_var(--color-info)] [--row-hover:var(--color-info-bg)]',
+    duplicate: 'shadow-[inset_3px_0_0_var(--color-warning)] [--row-hover:var(--color-warning-bg)]',
+    error: 'shadow-[inset_3px_0_0_var(--color-danger)] [--row-hover:var(--color-danger-bg)]',
+};
+const cell = 'border border-border px-2.5 py-1.5 align-top';
+const head = 'border border-border px-2.5 py-1.5 font-semibold whitespace-nowrap';
+
 const kindTone = { error: 'danger', duplicate: 'warning', warning: 'warning' };
 const kindLabel = { error: 'Not imported', duplicate: 'Duplicate', warning: 'Imported with a note' };
 const formatDate = (value) =>
@@ -212,7 +264,7 @@ const downloadLeftOut = () => {
 </script>
 
 <template>
-    <Modal :open="open" :title="title" icon="upload" size="xl" :tone="tone" :dismissible="!busy" @close="emit('close')">
+    <Modal :open="open" :title="title" icon="upload" size="2xl" :tone="tone" :dismissible="!busy" @close="emit('close')">
         <!-- Said aloud to screen readers whenever the phase changes. -->
         <p class="sr-only" role="status" aria-live="polite">{{ statusText }}</p>
 
@@ -353,49 +405,92 @@ const downloadLeftOut = () => {
                     Nothing in this file can be imported. Correct the rows below in the spreadsheet and choose it again.
                 </Alert>
 
-                <section v-if="result.sample.length" aria-label="Appointments that will be imported">
-                    <h3 class="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">
-                        Will be imported<span v-if="result.counts.ready > result.sample.length"> (the first {{ result.sample.length }} of {{ result.counts.ready }})</span>
-                    </h3>
-                    <div class="overflow-x-auto rounded-md border border-border">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-surface-muted text-xs text-text-muted">
+                <section aria-label="Every row of the file">
+                    <div class="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap gap-1.5" role="group" aria-label="Show">
+                            <button
+                                v-for="f in filters"
+                                :key="f.id"
+                                type="button"
+                                class="rounded-full border px-3 py-1 text-xs font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring"
+                                :class="filter === f.id ? 'border-primary bg-primary text-white' : 'border-border text-text-muted hover:bg-surface-muted'"
+                                :aria-pressed="filter === f.id"
+                                @click="filter = f.id"
+                            >
+                                {{ f.label }} <span class="tabular-nums">({{ f.count }})</span>
+                            </button>
+                        </div>
+                        <label for="import-show-status" class="flex select-none items-center gap-2 text-xs text-text"><input id="import-show-status" v-model="showStatus" type="checkbox" class="size-3.5 accent-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring" />Show status and sheet / row</label>
+                        <input
+                            v-model="search"
+                            type="search"
+                            placeholder="Search name, agency, position"
+                            aria-label="Search the rows"
+                            class="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm sm:w-72"
+                        />
+                    </div>
+
+                    <div class="max-h-[28rem] overflow-auto rounded-md border border-border">
+                        <table class="w-full border-collapse text-left text-xs">
+                            <caption class="sr-only">Every appointment in the file. The number counts the rows that will be imported.</caption>
+                            <thead class="sticky top-0 z-10 bg-surface-muted text-[0.6875rem] text-text-muted">
                                 <tr>
-                                    <th scope="col" class="px-3 py-2 font-semibold">Appointee</th>
-                                    <th scope="col" class="px-3 py-2 font-semibold">Position</th>
-                                    <th scope="col" class="px-3 py-2 font-semibold">SG</th>
-                                    <th scope="col" class="px-3 py-2 font-semibold">Received</th>
-                                    <th scope="col" class="px-3 py-2 font-semibold">Processed by</th>
+                                    <th scope="col" :class="head" class="text-right">#</th>
+                                    <th v-if="showStatus" scope="col" :class="head">Status</th>
+                                    <th v-if="showStatus" scope="col" :class="head">Sheet / row</th>
+                                    <th scope="col" :class="head">Appointee</th>
+                                    <th scope="col" :class="head">Agency / Office</th>
+                                    <th scope="col" :class="head">Position</th>
+                                    <th scope="col" :class="head" class="text-right">SG</th>
+                                    <th scope="col" :class="head">Status of employment</th>
+                                    <th scope="col" :class="head">Received</th>
+                                    <th scope="col" :class="head">Received by</th>
+                                    <th scope="col" :class="head">CSC action</th>
+                                    <th scope="col" :class="head">Action officer</th>
+                                    <th scope="col" :class="head">Processed by</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(s, i) in result.sample" :key="i" class="border-t border-border/60">
-                                    <td class="px-3 py-2 font-medium">{{ s.name }}</td>
-                                    <td class="px-3 py-2">{{ s.position }}</td>
-                                    <td class="px-3 py-2 tabular-nums">{{ s.salary_grade }}</td>
-                                    <td class="px-3 py-2 whitespace-nowrap">{{ formatDate(s.date_received) }}</td>
-                                    <td class="px-3 py-2">{{ s.processed_by }}</td>
+                                <tr v-if="!pageRows.length">
+                                    <td :class="cell" :colspan="colCount" class="text-center text-text-muted">No rows match.</td>
+                                </tr>
+                                <tr v-for="r in pageRows" :key="`${r.sheet}-${r.row}`" class="transition-colors hover:bg-[var(--row-hover)]" :class="[rowRail[r.status], r.will_import ? '' : 'bg-surface-muted/60']">
+                                    <td :class="cell" class="text-right font-semibold tabular-nums">{{ r.no ?? '' }}</td>
+                                    <td v-if="showStatus" :class="cell">
+                                        <Badge :tone="statusTone[r.status]">{{ statusLabel[r.status] }}</Badge>
+                                    </td>
+                                    <td v-if="showStatus" :class="cell" class="whitespace-nowrap text-text-muted">{{ r.sheet }}, {{ r.row }}</td>
+                                    <td :class="cell">
+                                        <span class="font-medium">{{ r.name }}</span>
+                                        <ul v-if="r.notes.length" class="mt-1 max-w-64 list-disc space-y-0.5 pl-4 text-text-muted">
+                                            <li v-for="(m, i) in r.notes" :key="i">{{ m }}</li>
+                                        </ul>
+                                    </td>
+                                    <td :class="cell">{{ r.agency }}</td>
+                                    <td :class="cell">{{ r.position }}</td>
+                                    <td :class="cell" class="text-right tabular-nums">{{ r.salary_grade }}</td>
+                                    <td :class="cell">{{ r.employment_status }}</td>
+                                    <td :class="cell" class="whitespace-nowrap">{{ formatDate(r.date_received) }}</td>
+                                    <td :class="cell">{{ r.received_by }}</td>
+                                    <td :class="cell">{{ r.csc_action }}</td>
+                                    <td :class="cell">{{ r.action_officer }}</td>
+                                    <td :class="cell">{{ r.processed_by }}</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                </section>
 
-                <section v-if="result.problems.length" aria-label="Rows that need attention">
-                    <h3 class="mb-2 text-xs font-semibold tracking-wide text-text-muted uppercase">Rows that need attention</h3>
-                    <ul class="max-h-72 divide-y divide-border overflow-y-auto rounded-md border border-border">
-                        <li v-for="p in result.problems" :key="`${p.sheet}-${p.row}`" class="p-3 text-sm">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <Badge :tone="kindTone[p.kind]">{{ kindLabel[p.kind] }}</Badge>
-                                <span class="font-medium">{{ p.name }}</span>
-                                <span class="text-xs text-text-muted">{{ p.sheet }} sheet, row {{ p.row }}</span>
-                            </div>
-                            <ul class="mt-1.5 list-disc space-y-0.5 pl-6 text-text-muted">
-                                <li v-for="(m, i) in p.messages" :key="i">{{ m }}</li>
-                            </ul>
-                        </li>
-                    </ul>
-                    <p v-if="result.problems.length >= 100" class="mt-2 text-xs text-text-muted">Showing the first 100 rows that need attention.</p>
+                    <div class="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-text-muted">
+                        <p>
+                            Showing {{ filtered.length ? (page - 1) * PAGE_SIZE + 1 : 0 }} to {{ Math.min(page * PAGE_SIZE, filtered.length) }} of {{ filtered.length }}.
+                            <strong class="text-text">{{ result.counts.ready }}</strong> will be imported.
+                        </p>
+                        <div v-if="pageCount > 1" class="flex items-center gap-2">
+                            <Button variant="outline" size="sm" :disabled="page <= 1" @click="page--">Previous</Button>
+                            <span class="tabular-nums">Page {{ page }} of {{ pageCount }}</span>
+                            <Button variant="outline" size="sm" :disabled="page >= pageCount" @click="page++">Next</Button>
+                        </div>
+                    </div>
                 </section>
             </div>
         </div>

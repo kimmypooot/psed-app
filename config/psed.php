@@ -12,8 +12,8 @@ return [
     // Monthly reports Field Offices submit to PSED: due on this day of the following month.
     'reports' => ['due_day' => env('PSED_REPORT_DUE_DAY', 5)],
 
-    // Shown in the About dialog and the sidebar footer.
-    'version' => env('PSED_VERSION', '0.1.0'),
+    // Shown in the About dialog and the sidebar footer. Raise it with CHANGELOG.md.
+    'version' => env('PSED_VERSION', '1.0.0'),
 
     /*
     |--------------------------------------------------------------------------

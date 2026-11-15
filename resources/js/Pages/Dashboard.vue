@@ -37,6 +37,16 @@ const refresh = () => {
 
 const maxBar = computed(() => Math.max(1, ...props.trend.flatMap((m) => [m.received, m.acted])));
 // A figure that leads to the list behind it.
+// A count in the offices table opens the appointments it counts; a zero has nothing to open.
+const officeLink = (o, kind) =>
+    ({
+        received: `/appointments?office=${o.id}&date_from=${props.month.from}&date_to=${props.month.to}`,
+        acted: `/appointments?office=${o.id}&status=acted&acted_from=${props.month.from}&acted_to=${props.month.to}`,
+        fo_backlog: `/appointments?office=${o.id}&status=pending&processor=field_office`,
+        psed_backlog: `/appointments?office=${o.id}&status=pending&processor=psed`,
+    })[kind];
+const countLink = 'inline-block min-w-8 rounded px-1.5 py-0.5 font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:bg-info-bg hover:decoration-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring';
+
 const cardLink = 'group block h-full rounded-lg transition-shadow hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring';
 const queueLink = 'block rounded-md p-1.5 -m-1.5 transition-colors hover:bg-surface-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-focus-ring';
 const queueTotal = computed(() => Math.max(1, props.stats.field_office_queue + props.stats.psed_queue));
@@ -74,7 +84,12 @@ const actionTone = (action) =>
                     <span class="mt-1 flex items-center gap-1 font-medium text-primary">See them<Icon name="arrowRight" size="sm" /></span>
                 </MetricCard>
             </Link>
-            <MetricCard label="Acted upon" :value="stats.acted" icon="checkCircle" tone="success">approved, validated, disapproved or invalidated</MetricCard>
+            <Link :href="`/appointments?status=acted&acted_from=${month.from}&acted_to=${month.to}`" :class="cardLink">
+                <MetricCard label="Acted upon" :value="stats.acted" icon="checkCircle" tone="success">
+                    approved, validated, disapproved or invalidated
+                    <span class="mt-1 flex items-center gap-1 font-medium text-primary">See them<Icon name="arrowRight" size="sm" /></span>
+                </MetricCard>
+            </Link>
             <Link href="/appointments?status=pending" :class="cardLink">
                 <MetricCard label="Backlog" :value="stats.backlog" icon="clock" :tone="stats.backlog ? 'warning' : 'success'">
                     still waiting for action
@@ -202,18 +217,18 @@ const actionTone = (action) =>
                         <th scope="col">Routing rule</th>
                         <th scope="col" class="text-right">Received</th>
                         <th scope="col" class="text-right">Acted</th>
-                        <th scope="col" class="text-right">Field Office backlog</th>
-                        <th scope="col" class="text-right">PSED backlog</th>
+                        <th scope="col" class="text-right">Field Office<br />Backlog</th>
+                        <th scope="col" class="text-right">PSED<br />Backlog</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="o in offices" :key="o.id">
                         <td class="font-medium">{{ o.name }}</td>
                         <td class="text-text-muted">PSED from SG {{ o.psed_from_sg }}</td>
-                        <td class="text-right tabular-nums">{{ o.received }}</td>
-                        <td class="text-right tabular-nums">{{ o.acted }}</td>
-                        <td class="text-right tabular-nums">{{ o.fo_backlog }}</td>
-                        <td class="text-right tabular-nums">{{ o.psed_backlog }}</td>
+                        <td v-for="kind in ['received', 'acted', 'fo_backlog', 'psed_backlog']" :key="kind" class="text-right tabular-nums">
+                            <Link v-if="o[kind] > 0" :href="officeLink(o, kind)" :class="countLink" :title="`See the ${o[kind]} for ${o.name}`">{{ o[kind] }}</Link>
+                            <span v-else class="inline-block min-w-8 px-1.5 text-text-muted">0</span>
+                        </td>
                     </tr>
                 </tbody>
             </Table>

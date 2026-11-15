@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AgencySettingsController;
+use App\Http\Controllers\AppointmentAnalyticsController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\AppointmentImportController;
 use App\Http\Controllers\AuditTrailController;
@@ -91,6 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/summary-database', [SummaryDatabaseController::class, 'index'])->name('reports.summary-database');
     Route::get('/reports/summary-database/check', [SummaryDatabaseController::class, 'check'])->middleware('throttle:20,1')->name('reports.summary-database.check');
     Route::get('/reports/summary-database/download', [SummaryDatabaseController::class, 'download'])->middleware('throttle:10,1')->name('reports.summary-database.download');
+
+    // Analytics of the appointments themselves: counts, breakdowns, outcomes and turnaround. PSED administrators only.
+    Route::get('/statistics/appointments', [AppointmentAnalyticsController::class, 'index'])->name('statistics.appointments');
 
     // How many appointments were for PWDs, indigenous group members and solo parents, by period: PSED administrators only.
     Route::get('/statistics/special-groups', [SpecialGroupReportController::class, 'index'])->name('statistics.special-groups');

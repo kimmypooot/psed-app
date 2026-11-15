@@ -32,6 +32,9 @@ class AppServiceProvider extends ServiceProvider
         // The Integrated CSE Applicants and Absorption Database Summary covers the whole region: PSED administrators only.
         Gate::define('view-summary-database', fn (User $user) => $user->isAdmin());
 
+        // The appointment analytics cover every Field Office: PSED administrators only.
+        Gate::define('view-statistics', fn (User $user) => $user->isAdmin());
+
         // The PWD / indigenous / solo parent counts cover every Field Office: PSED administrators only.
         Gate::define('view-special-group-report', fn (User $user) => $user->isAdmin());
 

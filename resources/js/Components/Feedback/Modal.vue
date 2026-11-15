@@ -25,7 +25,7 @@ const props = defineProps({
     size: {
         type: String,
         default: 'md',
-        validator: (value) => ['sm', 'md', 'lg', 'xl'].includes(value),
+        validator: (value) => ['sm', 'md', 'lg', 'xl', '2xl'].includes(value),
     },
     tone: {
         type: String,
@@ -52,7 +52,7 @@ const titleId = `modal-title-${useId()}`;
 const dialogRef = ref(null);
 let triggerElement = null;
 
-const sizeClasses = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl', xl: 'max-w-5xl' };
+const sizeClasses = { sm: 'max-w-sm', md: 'max-w-md', lg: 'max-w-2xl', xl: 'max-w-5xl', '2xl': 'max-w-7xl' };
 const headerClasses = {
     neutral: 'border-b border-border text-text',
     primary: 'bg-primary text-white',

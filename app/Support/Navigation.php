@@ -31,6 +31,7 @@ class Navigation
 
         if ($user->isAdmin()) {
             $items[] = ['heading' => 'Statistics'];
+            $items[] = ['label' => 'Appointment Analytics', 'href' => '/statistics/appointments', 'icon' => 'chartBar'];
             $items[] = ['label' => 'PWD, IP and Solo Parents', 'href' => '/statistics/special-groups', 'icon' => 'chartBar'];
             $items[] = ['heading' => 'Settings'];
             $items[] = ['label' => 'Field Offices', 'href' => '/settings/field-offices', 'icon' => 'building'];

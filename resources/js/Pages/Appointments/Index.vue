@@ -75,6 +75,10 @@ const chips = computed(() => {
         const [from, to] = [filters.date_from && formatDate(filters.date_from), filters.date_to && formatDate(filters.date_to)];
         list.push({ key: 'dates', label: from && to ? `Received ${from} to ${to}` : from ? `Received from ${from}` : `Received until ${to}`, clear: ['date_from', 'date_to'] });
     }
+    if (filters.acted_from || filters.acted_to) {
+        const [from, to] = [filters.acted_from && formatDate(filters.acted_from), filters.acted_to && formatDate(filters.acted_to)];
+        list.push({ key: 'acted', label: from && to ? `Acted ${from} to ${to}` : from ? `Acted from ${from}` : `Acted until ${to}`, clear: ['acted_from', 'acted_to'] });
+    }
     if (filters.processor) list.push({ key: 'processor', label: `Processed by ${processorOptions.find((o) => o.value === filters.processor)?.label ?? filters.processor}`, clear: ['processor'] });
     if (filters.office) list.push({ key: 'office', label: props.offices.find((o) => String(o.id) === String(filters.office))?.name ?? 'Field Office', clear: ['office'] });
 
@@ -114,11 +118,11 @@ const openRow = (event, appointment) => {
 const officeOptions = computed(() => props.offices.map((o) => ({ value: String(o.id), label: o.name })));
 
 const hasFilters = computed(() =>
-    ['search', 'sg', 'agency', 'date_from', 'date_to', 'processor', 'status', 'office'].some((key) => filters[key] !== '' && filters[key] != null),
+    ['search', 'sg', 'agency', 'date_from', 'date_to', 'acted_from', 'acted_to', 'processor', 'status', 'office'].some((key) => filters[key] !== '' && filters[key] != null),
 );
 
 const reset = () => {
-    for (const key of ['search', 'sg', 'agency', 'date_from', 'date_to', 'processor', 'status', 'office']) filters[key] = '';
+    for (const key of ['search', 'sg', 'agency', 'date_from', 'date_to', 'acted_from', 'acted_to', 'processor', 'status', 'office']) filters[key] = '';
 };
 
 const sortBy = (column) => {

@@ -88,6 +88,7 @@ class AppointmentImportController extends Controller
             'counts' => $analysis['counts'],
             'problems' => $this->problems($analysis['rows']),
             'sample' => $this->sample($analysis['rows'], $router),
+            'rows' => $this->allRows($analysis['rows'], $router),
         ]);
     }
 
@@ -214,6 +215,61 @@ class AppointmentImportController extends Controller
                 'date_received' => $r['data']['date_received'],
                 'office' => $r['office']->name,
                 'processed_by' => $processor === Processor::Psed ? 'PSED' : $r['office']->name,
+            ];
+        })->values()->all();
+    }
+
+    /**
+     * Every row of the file as the review table shows it (the file is capped at 2,000 rows), so the whole
+     * of what will be written can be checked: the fields of the MOA form, the verdict, and the notes.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function allRows(array $rows, AppointmentRouter $router): array
+    {
+        return collect($rows)->map(function ($r) use ($router) {
+            $d = $r['data'];
+            $notes = [...$r['errors'], ...$r['warnings']];
+
+            // A report downloaded from CARES prints these two as initials; read back they stay initials.
+            foreach (['received_by' => 'Received by', 'action_officer' => 'Action officer'] as $field => $label) {
+                if (preg_match('/^[A-Z]{2,6}$/', (string) ($d[$field] ?? ''))) {
+                    $notes[] = "{$label} \"{$d[$field]}\" looks like initials, not a name; it will be saved as written.";
+                }
+            }
+
+            $status = $r['errors'] !== [] ? 'error' : ($r['duplicate'] ? 'duplicate' : ($notes !== [] ? 'warning' : 'ready'));
+
+            return [
+                'sheet' => $r['sheet'],
+                'row' => $r['row'],
+                'status' => $status,
+                'will_import' => (bool) $r['ready'],
+                'name' => $r['name'],
+                'office' => $r['office']?->name,
+                'processed_by' => ($r['office'] && isset($d['salary_grade']) && $d['salary_grade'] !== null)
+                    ? ($router->route($r['office'], (int) $d['salary_grade']) === Processor::Psed ? 'PSED' : 'Field Office')
+                    : null,
+                'agency' => $d['agency'] ?? null,
+                'sector' => $d['sector'] ?? null,
+                'date_received' => $d['date_received'] ?? null,
+                'time_received' => $d['time_received'] ?? null,
+                'received_by' => $d['received_by'] ?? null,
+                'date_issued' => $d['date_issued'] ?? null,
+                'date_effective' => $d['date_effective'] ?? null,
+                'sex' => $d['sex'] ?? null,
+                'position' => $d['position'] ?? null,
+                'salary_grade' => $d['salary_grade'] ?? null,
+                'level' => $d['level'] ?? null,
+                'employment_status' => $d['employment_status'] ?? null,
+                'nature_of_appointment' => $d['nature_of_appointment'] ?? null,
+                'eligibility_type' => $d['eligibility_type'] ?? null,
+                'csc_action' => $d['csc_action'] ?? null,
+                'action_officer' => $d['action_officer'] ?? null,
+                'action_date' => $d['action_date'] ?? null,
+                'release_date' => $d['release_date'] ?? null,
+                'notes' => array_values(array_unique($notes)),
             ];
         })->values()->all();
     }

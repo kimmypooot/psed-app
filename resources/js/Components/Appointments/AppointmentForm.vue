@@ -45,11 +45,9 @@ const initialOfficer = initial.action_officer_imis_id ? String(initial.action_of
 const isListed = (id) => props.actionOfficers.groups.some((g) => g.options.some((o) => o.value === String(id)));
 const initialReceiver = initial.received_by_imis_id
     ? String(initial.received_by_imis_id)
-    : initial.received_by
-      ? 'keep'
-      : !props.appointment && props.defaults.received_by_imis_id && isListed(props.defaults.received_by_imis_id)
-        ? String(props.defaults.received_by_imis_id)
-        : '';
+    : !props.appointment && props.defaults.received_by_imis_id && isListed(props.defaults.received_by_imis_id)
+      ? String(props.defaults.received_by_imis_id)
+      : '';
 
 const form = useForm({
     field_office_id: v(initial.field_office_id ?? props.defaults.field_office_id),
@@ -125,8 +123,6 @@ const receiverGroups = computed(() => {
 
     if (initial.received_by_imis_id && !isListed(initial.received_by_imis_id)) {
         groups.unshift({ label: 'Saved earlier', options: [{ value: String(initial.received_by_imis_id), label: `${initial.received_by} (not in this list)` }] });
-    } else if (!initial.received_by_imis_id && initial.received_by) {
-        groups.unshift({ label: 'Saved earlier', options: [{ value: 'keep', label: `${initial.received_by} (not linked to IMIS)` }] });
     }
 
     return groups;
@@ -271,7 +267,7 @@ const goTo = (id) => {
 </script>
 
 <template>
-    <form class="space-y-4" novalidate @submit.prevent="submit">
+    <form class="space-y-6" novalidate @submit.prevent="submit">
         <Alert v-if="Object.keys(form.errors).length" tone="danger" title="Please check the form">
             {{ Object.keys(form.errors).length }} field(s) need attention.
         </Alert>
@@ -316,26 +312,31 @@ const goTo = (id) => {
         </nav>
 
         <Card id="sec-receipt" class="scroll-mt-32" title="Receipt" icon="download" description="From the documents submitted by the client agency.">
-            <div class="grid gap-4 md:grid-cols-12">
+            <div class="grid gap-x-4 gap-y-5 md:grid-cols-12">
                 <div v-if="user.sees_all_offices" class="md:col-span-4">
                     <Combobox id="field_office_id" v-model="form.field_office_id" label="Field Office" required :options="officeOptions" :allow-custom="false" placeholder="Search for an office" :invalid="!!form.errors.field_office_id" />
                     <InputError :message="form.errors.field_office_id" />
                 </div>
-                <div class="md:col-span-8">
+                <div :class="user.sees_all_offices ? 'md:col-span-8' : 'md:col-span-12'">
                     <Combobox id="agency" v-model="form.agency" label="Agency / Office" required :options="agencySuggestions" placeholder="Search or type an agency" :invalid="!!form.errors.agency" />
                     <InputError :message="form.errors.agency" />
                 </div>
-                <div class="md:col-span-4">
+                <div class="md:col-span-6">
                     <Combobox id="sector" v-model="form.sector" label="Sector" :options="options.sector" :allow-custom="false" placeholder="Search for a sector" :invalid="!!form.errors.sector" />
                     <InputError :message="form.errors.sector" />
                 </div>
-                <div class="md:col-span-4">
+                <div class="md:col-span-6">
+                    <FormGroup id="received_by_imis_id" label="Received by" :error="form.errors.received_by_imis_id">
+                        <Combobox :allow-custom="false" id="received_by_imis_id" v-model="form.received_by_imis_id" :options="receiverGroups" placeholder="Not recorded" :disabled="!!actionOfficers.error && !receiverGroups.length" />
+                    </FormGroup>
+                </div>
+                <div class="md:col-span-3">
                     <TextInput id="date_received" v-model="form.date_received" type="date" label="Date received" required :invalid="!!form.errors.date_received" />
                     <InputError :message="form.errors.date_received" />
                 </div>
-                <div class="md:col-span-4">
+                <div class="md:col-span-3">
                     <div class="flex items-end gap-2">
-                        <div class="w-36">
+                        <div class="min-w-0 flex-1">
                             <TextInput id="time_received" v-model="form.time_received" type="time" label="Time received" :invalid="!!form.errors.time_received" />
                         </div>
                         <Button variant="outline" @click="recordTimeReceived">
@@ -353,112 +354,107 @@ const goTo = (id) => {
                     <TextInput id="date_effective" v-model="form.date_effective" type="date" label="Date of effectivity / assumption" />
                     <InputError :message="form.errors.date_effective" />
                 </div>
-                <div class="md:col-span-6">
-                    <FormGroup id="received_by_imis_id" label="Received by" :helper-text="user.sees_all_offices ? 'An employee of any Field Office, as IMIS lists them.' : 'An employee of your office, as IMIS lists them.'" :error="form.errors.received_by_imis_id">
-                        <Combobox :allow-custom="false" id="received_by_imis_id" v-model="form.received_by_imis_id" :options="receiverGroups" placeholder="Not recorded" :disabled="!!actionOfficers.error && !receiverGroups.length" />
-                    </FormGroup>
-                </div>
             </div>
         </Card>
 
         <Card id="sec-appointee" class="scroll-mt-32" title="Appointee" icon="user">
-            <div class="grid gap-4 md:grid-cols-4">
-                <div>
+            <div class="grid gap-x-4 gap-y-5 md:grid-cols-12">
+                <div class="md:col-span-3">
                     <TextInput id="last_name" v-model="form.last_name" label="Last name" required :invalid="!!form.errors.last_name" />
                     <InputError :message="form.errors.last_name" />
                 </div>
-                <div>
+                <div class="md:col-span-3">
                     <TextInput id="first_name" v-model="form.first_name" label="First name" required :invalid="!!form.errors.first_name" />
                     <InputError :message="form.errors.first_name" />
                 </div>
-                <div>
+                <div class="md:col-span-3">
                     <TextInput id="middle_name" v-model="form.middle_name" label="Middle name" />
                     <InputError :message="form.errors.middle_name" />
                 </div>
-                <div>
+                <div class="md:col-span-3">
                     <TextInput id="name_extension" v-model="form.name_extension" label="Extension (Jr., III)" />
                     <InputError :message="form.errors.name_extension" />
                 </div>
-                <FormGroup id="sex" label="Sex" required :error="form.errors.sex">
+                <FormGroup class="md:col-span-3" id="sex" label="Sex" required :error="form.errors.sex">
                     <Combobox :allow-custom="false" id="sex" v-model="form.sex" :options="sexOptions" placeholder="Select" required />
                 </FormGroup>
-            </div>
-            <div class="mt-4 flex flex-wrap gap-x-6 gap-y-2">
-                <Checkbox id="is_pwd" v-model="form.is_pwd" label="Person with disability" />
-                <Checkbox id="is_indigenous" v-model="form.is_indigenous" label="Member of an indigenous group" />
-                <Checkbox id="is_solo_parent" v-model="form.is_solo_parent" label="Solo parent" />
-                <Checkbox id="is_k12_graduate" v-model="form.is_k12_graduate" label="K-12 graduate" />
+                <div class="flex flex-wrap items-end gap-x-6 gap-y-2 pb-2 md:col-span-9">
+                    <Checkbox id="is_pwd" v-model="form.is_pwd" label="Person with disability" />
+                    <Checkbox id="is_indigenous" v-model="form.is_indigenous" label="Member of an indigenous group" />
+                    <Checkbox id="is_solo_parent" v-model="form.is_solo_parent" label="Solo parent" />
+                    <Checkbox id="is_k12_graduate" v-model="form.is_k12_graduate" label="K-12 graduate" />
+                </div>
             </div>
         </Card>
 
         <Card id="sec-position" class="scroll-mt-32" title="Position and appointment" icon="clipboard">
-            <div class="grid gap-4 md:grid-cols-3">
-                <div class="md:col-span-2">
+            <div class="grid gap-x-4 gap-y-5 md:grid-cols-12">
+                <div class="md:col-span-8">
                     <Combobox id="position" v-model="form.position" label="Position title" required :options="positionSuggestions" :loading="positionLoading" placeholder="Search for a position title" :invalid="!!form.errors.position" />
                     <InputError :message="form.errors.position" />
                 </div>
-                <FormGroup id="salary_grade" label="Salary grade" required :error="form.errors.salary_grade">
+                <FormGroup class="md:col-span-4" id="salary_grade" label="Salary grade" required :error="form.errors.salary_grade">
                     <Combobox :allow-custom="false" id="salary_grade" v-model="form.salary_grade" :options="gradeOptions" placeholder="Select" required />
                 </FormGroup>
-                <FormGroup id="level" label="Level" :error="form.errors.level">
+                <FormGroup class="md:col-span-4" id="level" label="Level" :error="form.errors.level">
                     <Combobox :allow-custom="false" id="level" v-model="form.level" :options="opt(options.level)" placeholder="Select" />
                 </FormGroup>
-                <FormGroup id="employment_status" label="Employment status" required :error="form.errors.employment_status">
+                <FormGroup class="md:col-span-4" id="employment_status" label="Employment status" required :error="form.errors.employment_status">
                     <Combobox :allow-custom="false" id="employment_status" v-model="form.employment_status" :options="opt(options.employment_status)" placeholder="Select" required />
                 </FormGroup>
-                <FormGroup id="nature_of_appointment" label="Nature of appointment" required :error="form.errors.nature_of_appointment">
+                <FormGroup class="md:col-span-4" id="nature_of_appointment" label="Nature of appointment" required :error="form.errors.nature_of_appointment">
                     <Combobox :allow-custom="false" id="nature_of_appointment" v-model="form.nature_of_appointment" :options="opt(options.nature_of_appointment)" placeholder="Select" required />
                 </FormGroup>
             </div>
         </Card>
 
         <Card id="sec-publication" class="scroll-mt-32" title="Publication" icon="megaphone" description="Of the vacant position (not required for Casual and Contractual).">
-            <div class="grid gap-4 md:grid-cols-3">
-                <div>
+            <div class="grid gap-x-4 gap-y-5 md:grid-cols-12">
+                <div class="md:col-span-3">
                     <TextInput id="publication_start" v-model="form.publication_start" type="date" label="Published from" />
                     <InputError :message="form.errors.publication_start" />
                 </div>
-                <div>
+                <div class="md:col-span-3">
                     <TextInput id="publication_end" v-model="form.publication_end" type="date" label="Published until" :invalid="!!form.errors.publication_end" />
                     <InputError :message="form.errors.publication_end" />
                 </div>
-                <FormGroup id="publication_mode" label="Mode of publication" :error="form.errors.publication_mode">
+                <FormGroup class="md:col-span-6" id="publication_mode" label="Mode of publication" :error="form.errors.publication_mode">
                     <Combobox :allow-custom="false" id="publication_mode" v-model="form.publication_mode" :options="opt(options.publication_mode)" placeholder="Select" />
                 </FormGroup>
             </div>
         </Card>
 
         <Card id="sec-eligibility" class="scroll-mt-32" title="Eligibility" icon="shield">
-            <div class="grid gap-4 md:grid-cols-3">
-                <div class="md:col-span-2">
+            <div class="grid gap-x-4 gap-y-5 md:grid-cols-12">
+                <div class="md:col-span-8">
                     <Combobox id="eligibility_type" v-model="form.eligibility_type" label="Type of eligibility" :options="options.eligibility_type" placeholder="Search for a type of eligibility" :invalid="!!form.errors.eligibility_type" />
                     <InputError :message="form.errors.eligibility_type" />
                 </div>
-                <div class="flex items-end pb-2">
+                <div class="md:col-span-4 flex items-end pb-2">
                     <Checkbox id="is_first_time_entrant" v-model="form.is_first_time_entrant" label="First-time entrant: eligibility used for the first time" />
                 </div>
                 <!-- The SKOE is granted for one of three SK positions; the Absorption Database counts them apart. -->
-                <div v-if="isSkoe" class="md:col-span-2">
+                <div v-if="isSkoe" class="md:col-span-8">
                     <FormGroup id="skoe_position" label="SK position" required helper-text="The position held when the Sangguniang Kabataan Official Eligibility was granted." :error="form.errors.skoe_position">
                         <Combobox :allow-custom="false" id="skoe_position" v-model="form.skoe_position" :options="opt(options.skoe_position)" placeholder="SK Official, SK Secretary or SK Treasurer" required />
                     </FormGroup>
                 </div>
                 <template v-if="hasEligibility">
-                    <div>
+                    <div class="md:col-span-3">
                         <TextInput id="eligibility_exam_date" v-model="form.eligibility_exam_date" label="Date of exam (mm/dd/yyyy)" />
                         <InputError :message="form.errors.eligibility_exam_date" />
                     </div>
-                    <div>
+                    <div class="md:col-span-3">
                         <TextInput id="eligibility_exam_place" v-model="form.eligibility_exam_place" label="Place of exam" />
                     </div>
-                    <div>
+                    <div class="md:col-span-3">
                         <TextInput id="eligibility_issued_date" v-model="form.eligibility_issued_date" type="date" label="Date of issuance" />
                         <InputError :message="form.errors.eligibility_issued_date" />
                     </div>
-                    <div>
+                    <div class="md:col-span-3">
                         <TextInput id="eligibility_issued_place" v-model="form.eligibility_issued_place" label="Place of issuance" />
                     </div>
-                    <div>
+                    <div class="md:col-span-3">
                         <TextInput id="eligibility_validity" v-model="form.eligibility_validity" type="date" label="Validity of license" />
                         <InputError :message="form.errors.eligibility_validity" />
                     </div>
@@ -471,27 +467,27 @@ const goTo = (id) => {
                 This appointment is processed by PSED, so the CSC action is recorded there. You can still encode and correct its details.
             </Alert>
             <Alert v-if="actionOpen && actionOfficers.error" tone="warning" class="mb-4">{{ actionOfficers.error }} The action officer already saved is kept.</Alert>
-            <fieldset v-if="actionOpen" :disabled="editing && !canRecordAction" class="grid gap-4 md:grid-cols-4">
-                <FormGroup id="csc_action" label="Action" :error="form.errors.csc_action">
+            <fieldset v-if="actionOpen" :disabled="editing && !canRecordAction" class="grid gap-x-4 gap-y-5 md:grid-cols-12">
+                <FormGroup class="md:col-span-3" id="csc_action" label="Action" :error="form.errors.csc_action">
                     <Combobox :allow-custom="false" id="csc_action" v-model="form.csc_action" :options="opt(options.csc_action)" placeholder="Not yet acted" />
                 </FormGroup>
-                <FormGroup id="action_officer_imis_id" label="Action officer" :helper-text="toPsed === null ? null : toPsed ? 'The Director IV or Director III of the Office of the Regional Director, who act on what PSED processes.' : 'An employee from IMIS: any Field Office for PSED, your own office for a Field Office.'" :error="form.errors.action_officer_imis_id">
+                <FormGroup class="md:col-span-5" id="action_officer_imis_id" label="Action officer" :helper-text="toPsed === null ? null : toPsed ? 'The Director IV or Director III of the Office of the Regional Director, who act on what PSED processes.' : null" :error="form.errors.action_officer_imis_id">
                     <Combobox :allow-custom="false" id="action_officer_imis_id" v-model="form.action_officer_imis_id" :options="officerGroups" placeholder="No action officer yet" :disabled="!!actionOfficers.error && !officerGroups.length" />
                 </FormGroup>
-                <div>
+                <div class="md:col-span-2">
                     <TextInput id="action_date" v-model="form.action_date" type="date" label="Date of action" :invalid="!!form.errors.action_date" />
                     <InputError :message="form.errors.action_date" />
                 </div>
-                <div>
+                <div class="md:col-span-2">
                     <TextInput id="release_date" v-model="form.release_date" type="date" label="Date of release" :invalid="!!form.errors.release_date" />
                     <InputError :message="form.errors.release_date" />
                 </div>
-                <div class="md:col-span-2">
+                <div class="md:col-span-6">
                     <FormGroup id="pending_reason" label="If pending, the reason" :error="form.errors.pending_reason">
                         <Textarea id="pending_reason" v-model="form.pending_reason" :rows="2" />
                     </FormGroup>
                 </div>
-                <div class="md:col-span-2">
+                <div class="md:col-span-6">
                     <FormGroup id="disapproval_reason" label="If disapproved or invalidated, the reason" :error="form.errors.disapproval_reason">
                         <Textarea id="disapproval_reason" v-model="form.disapproval_reason" :rows="2" />
                     </FormGroup>

@@ -55,6 +55,8 @@ class AppointmentController extends Controller
             'agency' => ['nullable', 'string', 'max:255'],
             'date_from' => ['nullable', 'date'],
             'date_to' => ['nullable', 'date'],
+            'acted_from' => ['nullable', 'date'],
+            'acted_to' => ['nullable', 'date'],
             'processor' => ['nullable', 'in:field_office,psed'],
             'status' => ['nullable', 'in:pending,acted'],
             'office' => ['nullable', 'integer'],
@@ -80,6 +82,8 @@ class AppointmentController extends Controller
             // Plain comparisons on the DATE column, so the index is used (whereDate would wrap it in DATE()).
             ->when(! empty($filters['date_from']), fn (Builder $q) => $q->where('date_received', '>=', $filters['date_from']))
             ->when(! empty($filters['date_to']), fn (Builder $q) => $q->where('date_received', '<=', $filters['date_to']))
+            ->when(! empty($filters['acted_from']), fn (Builder $q) => $q->acted()->where('action_date', '>=', $filters['acted_from']))
+            ->when(! empty($filters['acted_to']), fn (Builder $q) => $q->acted()->where('action_date', '<=', $filters['acted_to']))
             ->when(! empty($filters['processor']), fn (Builder $q) => $q->where('processed_by', $filters['processor']))
             ->when(($filters['status'] ?? null) === 'pending', fn (Builder $q) => $q->unacted())
             ->when(($filters['status'] ?? null) === 'acted', fn (Builder $q) => $q->acted());
@@ -114,6 +118,8 @@ class AppointmentController extends Controller
                 'agency' => $filters['agency'] ?? '',
                 'date_from' => $filters['date_from'] ?? '',
                 'date_to' => $filters['date_to'] ?? '',
+                'acted_from' => $filters['acted_from'] ?? '',
+                'acted_to' => $filters['acted_to'] ?? '',
                 'processor' => $filters['processor'] ?? '',
                 'status' => $filters['status'] ?? '',
                 'office' => $filters['office'] ?? '',
@@ -375,7 +381,7 @@ class AppointmentController extends Controller
             'options' => $this->lookups->formOptions(),
             'actionOfficers' => $this->actionOfficers($request->user()),
             'offices' => $this->lookups->offices(),
-            'can_record_action' => $request->user()->can('record-action', [$appointment->fieldOffice, $appointment->processed_by]),
+            'canRecordAction' => $request->user()->can('record-action', [$appointment->fieldOffice, $appointment->processed_by]),
         ]);
     }
 

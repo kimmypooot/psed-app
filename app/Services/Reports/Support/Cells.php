@@ -18,6 +18,14 @@ final class Cells
         return ($value === null || $value === '') ? self::NA : (string) $value;
     }
 
+    /** A name as its initials, "Kim Benedick M. Banoyo" being "KBMB", or "N/A". */
+    public static function initials(mixed $name): string
+    {
+        $words = preg_split('/\s+/', is_string($name) ? trim($name) : '', -1, PREG_SPLIT_NO_EMPTY);
+
+        return $words ? mb_strtoupper(implode('', array_map(fn ($w) => mb_substr($w, 0, 1), $words))) : self::NA;
+    }
+
     /** A real Excel date (the template's cell format shows it as mm/dd/yyyy), or "N/A". */
     public static function date(?CarbonInterface $date): float|string
     {

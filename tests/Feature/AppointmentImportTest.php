@@ -132,7 +132,12 @@ class AppointmentImportTest extends TestCase
             ->put('time_received', $a->time_received ? substr($a->time_received, 0, 5) : null)
             ->put('processed_by', $a->processed_by->value)->all();
 
-        $before = Appointment::orderBy('last_name')->get()->mapWithKeys(fn ($a) => [$a->last_name => $snapshot($a)]);
+        // The report prints who received it and the action officer as initials, so that is what comes back.
+        $initials = fn (?string $n) => $n === null ? null : implode('', array_map(fn ($w) => mb_substr($w, 0, 1), preg_split('/\s+/', $n)));
+        $before = Appointment::orderBy('last_name')->get()->mapWithKeys(fn ($a) => [$a->last_name => array_merge($snapshot($a), [
+            'received_by' => $initials($a->received_by),
+            'action_officer' => $initials($a->action_officer),
+        ])]);
 
         // The report the office would send, then wipe the records and bring the report back in.
         $file = (new ExcelReportService)->generate(ReportType::Moa, $this->office, 2026, 10);
